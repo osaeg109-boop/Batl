@@ -72,160 +72,172 @@ const words=[
 let roomCode="";
 let playerName="";
 let localStream=null;
-let peers={};
-
-// إنشاء كود عشوائي
-function genCode(){return Math.random().toString(36).substring(2,6).toUpperCase();}
 
 // ==========================
-// الغرفة
+// توليد كود فريد للغرفة
+// ==========================
+async function genUniqueCode(){
+  let code, exists=true;
+  while(exists){
+    code=Math.random().toString(36).substring(2,6).toUpperCase();
+    const snap=await getDoc(doc(db,"rooms",code));
+    if(!snap.exists()) exists=false;
+  }
+  return code;
+}
+
+// ==========================
+// إنشاء الغرفة
 // ==========================
 window.createRoom=async()=>{
-playerName=nameInput.value.trim();
-if(!playerName)return alert("اكتب اسمك");
+  playerName=nameInput.value.trim();
+  if(!playerName) return alert("اكتب اسمك");
 
-roomCode=genCode();
-const word=words[Math.floor(Math.random()*words.length)];
+  roomCode = await genUniqueCode(); // كود فريد
+  const word = words[Math.floor(Math.random()*words.length)];
 
-await setDoc(doc(db,"rooms",roomCode),{
-status:"waiting",
-word,
-spy:"",
-players:{[playerName]:{name:playerName,voted:false}},
-votes:{}
-});
+  await setDoc(doc(db,"rooms",roomCode),{
+    status:"waiting",
+    word,
+    spy:"",
+    players:{[playerName]:{name:playerName,voted:false}},
+    votes:{}
+  });
 
-openRoom();
+  openRoom();
 };
 
+// ==========================
+// الانضمام للغرفة
+// ==========================
 window.joinRoom=async()=>{
-playerName=nameInput.value.trim();
-roomCode=roomInput.value.trim().toUpperCase();
-if(!playerName||!roomCode)return;
+  playerName=nameInput.value.trim();
+  roomCode=roomInput.value.trim().toUpperCase();
+  if(!playerName||!roomCode) return alert("كمّل البيانات");
 
-const ref=doc(db,"rooms",roomCode);
-const snap=await getDoc(ref);
-if(!snap.exists())return alert("الغرفة مش موجودة");
+  const ref=doc(db,"rooms",roomCode);
+  const snap=await getDoc(ref);
+  if(!snap.exists()) return alert("الغرفة مش موجودة");
 
-const data=snap.data();
-if(data.players[playerName])return alert("الاسم ده مستخدم");
+  const data=snap.data();
+  if(data.players[playerName]) return alert("الاسم ده مستخدم");
 
-data.players[playerName]={name:playerName,voted:false};
-await setDoc(ref,data);
-openRoom();
+  data.players[playerName]={name:playerName,voted:false};
+  await setDoc(ref,data);
+  openRoom();
 };
 
 // ==========================
 // فتح الغرفة
 // ==========================
 function openRoom(){
-screen.innerHTML=`
-<h1>الغرفة 🔥</h1>
-<div class="room-code">${roomCode}</div>
-<button onclick="startGame()">ابدأ اللعب</button>
-<h3>الشات الصوتي 🎙️</h3>
-<button onclick="startAudio()">فتح المايك</button>
-<div id="players"></div>
-`;
+  screen.innerHTML=`
+    <h1>الغرفة 🔥</h1>
+    <div class="room-code">${roomCode}</div>
+    <button onclick="startGame()">ابدأ اللعب</button>
+    <h3>الشات الصوتي 🎙️</h3>
+    <button onclick="startAudio()">فتح المايك</button>
+    <div id="players"></div>
+  `;
 
-onSnapshot(doc(db,"rooms",roomCode),snap=>{
-const data=snap.data();
-const div=document.getElementById("players");
-div.innerHTML="";
-Object.keys(data.players).forEach(p=>{
-div.innerHTML+=`<div class="player">😂 ${p}</div>`;
-});
-});
+  onSnapshot(doc(db,"rooms",roomCode),snap=>{
+    const data=snap.data();
+    const div=document.getElementById("players");
+    div.innerHTML="";
+    Object.keys(data.players).forEach(p=>{
+      div.innerHTML+=`<div class="player">😂 ${p}</div>`;
+    });
+  });
 }
 
 // ==========================
 // بدء اللعبة + توزيع جاسوس
 // ==========================
 window.startGame=async()=>{
-const ref=doc(db,"rooms",roomCode);
-const snap=await getDoc(ref);
-const players=Object.keys(snap.data().players);
-const spyPlayer=players[Math.floor(Math.random()*players.length)];
-await updateDoc(ref,{spy:spyPlayer,status:"playing"});
-showRole();
+  const ref=doc(db,"rooms",roomCode);
+  const snap=await getDoc(ref);
+  const players=Object.keys(snap.data().players);
+  const spyPlayer=players[Math.floor(Math.random()*players.length)];
+  await updateDoc(ref,{spy:spyPlayer,status:"playing"});
+  showRole();
 };
 
 // ==========================
 // عرض الدور والكلمة
 // ==========================
 function showRole(){
-onSnapshot(doc(db,"rooms",roomCode),snap=>{
-const data=snap.data();
-if(data.status!=="playing")return;
+  onSnapshot(doc(db,"rooms",roomCode),snap=>{
+    const data=snap.data();
+    if(data.status!=="playing") return;
 
-if(playerName===data.spy){
-screen.innerHTML=`
-<h1>😈 انت الجاسوس</h1>
-<p>حاول تعدي ومتفضحش نفسك</p>
-<button onclick="goVote()">روح صوّت</button>
-`;
-}else{
-screen.innerHTML=`
-<h1>الكلمة 👇</h1>
-<div class="room-code">${data.word}</div>
-<button onclick="goVote()">روح صوّت</button>
-`;
-}
-});
+    if(playerName===data.spy){
+      screen.innerHTML=`
+        <h1>😈 انت الجاسوس</h1>
+        <p>حاول تعدي ومتفضحش نفسك</p>
+        <button onclick="goVote()">روح صوّت</button>
+      `;
+    }else{
+      screen.innerHTML=`
+        <h1>الكلمة 👇</h1>
+        <div class="room-code">${data.word}</div>
+        <button onclick="goVote()">روح صوّت</button>
+      `;
+    }
+  });
 }
 
 // ==========================
 // التصويت
 // ==========================
 window.goVote=()=>{
-onSnapshot(doc(db,"rooms",roomCode),snap=>{
-const data=snap.data();
-screen.innerHTML="<h1>صوّت 👇</h1>";
-Object.keys(data.players).forEach(p=>{
-if(p!==playerName){
-screen.innerHTML+=`<button class="vote red" onclick="vote('${p}')">${p}</button>`;
-}
-});
-});
+  onSnapshot(doc(db,"rooms",roomCode),snap=>{
+    const data=snap.data();
+    screen.innerHTML="<h1>صوّت 👇</h1>";
+    Object.keys(data.players).forEach(p=>{
+      if(p!==playerName){
+        screen.innerHTML+=`<button class="vote red" onclick="vote('${p}')">${p}</button>`;
+      }
+    });
+  });
 };
 
 window.vote=async(name)=>{
-const ref=doc(db,"rooms",roomCode);
-const snap=await getDoc(ref);
-const data=snap.data();
-data.votes[name]=(data.votes[name]||0)+1;
-await updateDoc(ref,{votes:data.votes});
-showResult();
+  const ref=doc(db,"rooms",roomCode);
+  const snap=await getDoc(ref);
+  const data=snap.data();
+  data.votes[name]=(data.votes[name]||0)+1;
+  await updateDoc(ref,{votes:data.votes});
+  showResult();
 };
 
 function showResult(){
-onSnapshot(doc(db,"rooms",roomCode),snap=>{
-const data=snap.data();
-let max=0,loser="";
-for(let v in data.votes){
-if(data.votes[v]>max){max=data.votes[v];loser=v;}
-}
-screen.innerHTML=`
-<h1>النتيجة 😂</h1>
-<p>أكتر واحد اتشتم: <b>${loser}</b></p>
-<p>${loser===data.spy?"اتفضح الجاسوس 😈":"الجاسوس كسب 🤡"}</p>
-<button onclick="location.reload()">إلعب تاني</button>
-`;
-});
+  onSnapshot(doc(db,"rooms",roomCode),snap=>{
+    const data=snap.data();
+    let max=0,loser="";
+    for(let v in data.votes){
+      if(data.votes[v]>max){max=data.votes[v];loser=v;}
+    }
+    screen.innerHTML=`
+      <h1>النتيجة 😂</h1>
+      <p>أكتر واحد اتشتم: <b>${loser}</b></p>
+      <p>${loser===data.spy?"اتفضح الجاسوس 😈":"الجاسوس كسب 🤡"}</p>
+      <button onclick="location.reload()">إلعب تاني</button>
+    `;
+  });
 }
 
 // ==========================
-// WebRTC شات صوتي
+// WebRTC صوتي
 // ==========================
 async function startAudio(){
-if(localStream)return;
-localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-const audioElem=document.createElement("audio");
-audioElem.srcObject=localStream;
-audioElem.autoplay=true;
-audioElem.muted=true;
-document.body.appendChild(audioElem);
-alert("الميك شغال دلوقتي 😂");
+  if(localStream) return alert("الميك شغال بالفعل 😎");
+  localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  const audioElem=document.createElement("audio");
+  audioElem.srcObject=localStream;
+  audioElem.autoplay=true;
+  audioElem.muted=true; // المايك الشخصي
+  document.body.appendChild(audioElem);
+  alert("الميك شغال دلوقتي 😂");
 }
 
 </script>
