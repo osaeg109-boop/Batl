@@ -1,290 +1,464 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>بطل تعريص</title>
-
-<style>
-*{
-  box-sizing:border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-}
-body{
-  margin:0;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color:#fff;
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-}
-h1,h2,h3{
-  text-align:center;
-}
-button{
-  background:#00ffc8;
-  border:none;
-  padding:14px;
-  border-radius:12px;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-}
-button:active{transform:scale(0.97);}
-input,select{
-  width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:none;
-  margin-bottom:10px;
-}
-.screen{
-  display:none;
-  padding:20px;
-  flex:1;
-}
-.screen.active{
-  display:block;
-}
-.card{
-  background:rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
-  border-radius:20px;
-  padding:20px;
-  margin-bottom:15px;
-}
-.footer{
-  text-align:center;
-  font-size:13px;
-  opacity:0.7;
-  padding:10px;
-}
-.list button{
-  width:100%;
-  margin-bottom:8px;
-}
-.countdown{
-  font-size:50px;
-  text-align:center;
-  margin-top:30px;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>بطل تعريص</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f43f5e;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+        }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            transition: transform 0.2s;
+        }
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+        .screen {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem 1.5rem 5rem 1.5rem;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .countdown-number {
+            font-size: 8rem;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
+            animation: pulseScale 1s infinite;
+        }
+        @keyframes pulseScale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        input, textarea {
+            background: #334155;
+            border: 2px solid transparent;
+            color: white;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .footer-note {
+            position: fixed;
+            bottom: 1rem;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.75rem;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .category-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+    </style>
 </head>
-
 <body>
 
-<!-- شاشة البداية -->
-<div class="screen active" id="startScreen">
-  <h1>🔥 بطل تعريص 🔥</h1>
-  <div class="card">
-    <input id="playerName" placeholder="اسم اللاعب">
-    <button onclick="addPlayer()">إضافة لاعب</button>
-    <div id="playersList"></div>
-  </div>
+    <!-- 1. Welcome Screen -->
+    <div id="welcome-screen" class="screen active justify-center items-center">
+        <div class="text-center">
+            <h1 class="text-6xl font-black mb-4 text-rose-500 tracking-tighter">بطل تعريص</h1>
+            <p class="text-slate-400 text-lg mb-12">لعبة القفش والذكاء</p>
+            <button onclick="navigateTo('setup-screen')" class="btn-primary w-64 py-4 rounded-full text-xl font-bold shadow-lg">
+                يلا نلعب
+            </button>
+        </div>
+    </div>
 
-  <div class="card">
-    <select id="category">
-      <option value="">اختر الفئة</option>
-      <option value="players">أسماء لاعبين</option>
-      <option value="clothes">ملابس</option>
-      <option value="food">طعام</option>
-      <option value="drinks">مشروبات</option>
-    </select>
-    <button onclick="startGame()">ابدأ الجيم</button>
-  </div>
-</div>
+    <!-- 2. Player Setup Screen -->
+    <div id="setup-screen" class="screen">
+        <h2 class="text-3xl font-bold mb-6 text-center">مين هيلعب؟</h2>
+        <div class="glass-card p-6 flex-grow mb-6">
+            <label class="block mb-2 text-slate-400">اكتب أسماء اللعيبة (كل اسم في سطر)</label>
+            <textarea id="player-names" class="w-full h-64 p-4 rounded-xl resize-none text-lg" placeholder="أحمد&#10;سارة&#10;محمد..."></textarea>
+        </div>
+        <button onclick="savePlayers()" class="btn-primary w-full py-4 rounded-full text-xl font-bold">التالي</button>
+    </div>
 
-<!-- شاشة كشف الأدوار -->
-<div class="screen" id="revealScreen">
-  <h2 id="revealText"></h2>
-  <button onclick="nextReveal()">التالي</button>
-</div>
+    <!-- 3. Category Selection -->
+    <div id="category-screen" class="screen">
+        <h2 class="text-3xl font-bold mb-6 text-center">اختار الفئة</h2>
+        <div id="categories-list" class="grid grid-cols-2 gap-4 flex-grow overflow-y-auto">
+            <!-- Dynamic Categories -->
+        </div>
+        <button onclick="navigateTo('setup-screen')" class="mt-4 text-slate-400 font-bold">تعديل الأسماء</button>
+    </div>
 
-<!-- شاشة النقاش -->
-<div class="screen" id="discussionScreen">
-  <h2>ناقشوا مين العرص 🤨</h2>
-  <p style="text-align:center">لما تخلصوا اضغطوا الزر</p>
-  <button onclick="startVoting()">عرفنا مين الجاسوس</button>
-</div>
+    <!-- 4. Role Reveal -->
+    <div id="reveal-screen" class="screen justify-center">
+        <div id="reveal-card" class="glass-card p-8 text-center py-16">
+            <h3 id="current-player-name" class="text-2xl font-bold mb-4 text-rose-400">...</h3>
+            <p class="mb-8 text-slate-300">دوس عشان تشوف دورك لوحدك</p>
+            
+            <div id="role-box" class="hidden mb-8">
+                <div id="role-badge" class="inline-block px-6 py-2 rounded-full bg-rose-500 text-white font-bold mb-4"></div>
+                <h4 id="secret-word-display" class="text-4xl font-black text-white"></h4>
+            </div>
 
-<!-- شاشة التصويت -->
-<div class="screen" id="voteScreen">
-  <h2 id="voteTitle"></h2>
-  <div class="list" id="voteList"></div>
-</div>
+            <button id="toggle-role-btn" onclick="toggleRole()" class="bg-slate-700 hover:bg-slate-600 w-full py-4 rounded-xl text-lg font-bold transition-all">
+                إظهار الدور
+            </button>
+            <button id="next-player-btn" onclick="nextPlayer()" class="hidden btn-primary w-full py-4 rounded-xl text-lg font-bold mt-4">
+                تم .. اللي بعده
+            </button>
+        </div>
+    </div>
 
-<!-- العد التنازلي -->
-<div class="screen" id="countdownScreen">
-  <div class="countdown" id="countdown">3</div>
-</div>
+    <!-- 5. Investigation Phase -->
+    <div id="timer-screen" class="screen items-center">
+        <h2 class="text-2xl font-bold mb-8 text-center">التحقيق شغال.. مين "العرص"؟</h2>
+        <div class="flex-grow flex items-center justify-center">
+            <div id="countdown-timer" class="text-7xl font-black text-rose-500 font-mono">03:00</div>
+        </div>
+        <button onclick="startVoting()" class="btn-primary w-full py-4 rounded-full text-xl font-bold shadow-lg mt-8">
+            عرفنا مين الجاسوس
+        </button>
+    </div>
 
-<!-- النتيجة -->
-<div class="screen" id="resultScreen">
-  <h2 id="resultText"></h2>
-  <div id="spyGuess"></div>
-</div>
+    <!-- 6. Voting Screen -->
+    <div id="voting-screen" class="screen">
+        <h2 class="text-3xl font-bold mb-6 text-center">مين شاكك فيه؟</h2>
+        <div id="voters-container" class="space-y-4 flex-grow overflow-y-auto pb-4">
+            <!-- Dynamic Voting List -->
+        </div>
+        <button id="submit-votes-btn" onclick="processVoting()" class="btn-primary w-full py-4 rounded-full text-xl font-bold mt-4">
+            كشف الحقيقة
+        </button>
+    </div>
 
-<div class="footer">
-© جميع الحقوق محفوظة لدى HOMOS
-</div>
+    <!-- 7. Dramatic Reveal Animation -->
+    <div id="drama-screen" class="screen justify-center items-center bg-black">
+        <div id="drama-timer" class="countdown-number">3</div>
+    </div>
 
-<script>
-/* ===== البيانات ===== */
-const words = {
-  players:["ميسي","رونالدو","صلاح","نيمار","زيدان","إنييستا"],
-  clothes:["تيشيرت","جاكيت","بنطلون","حذاء","كاب"],
-  food:["بيتزا","كشري","برجر","محشي","شاورما"],
-  drinks:["قهوة","شاي","بيبسي","عصير","نسكافيه"]
-};
+    <!-- 8. Result & Final Guess -->
+    <div id="result-screen" class="screen">
+        <div class="glass-card p-8 text-center mb-6">
+            <h2 class="text-2xl mb-2 text-slate-400">العرص الحقيقي هو:</h2>
+            <h1 id="actual-spy-name" class="text-5xl font-black text-rose-500 mb-6"></h1>
+            <p id="voting-summary" class="text-slate-300 italic"></p>
+        </div>
 
-let players=[];
-let spyIndex=0;
-let word="";
-let revealIndex=0;
-let votes={};
+        <div id="spy-guess-section" class="glass-card p-6">
+            <h3 class="text-xl font-bold mb-4">سؤال للعرص: الكلمة كانت إيه؟</h3>
+            <div id="guess-options" class="grid grid-cols-1 gap-3">
+                <!-- Multi-choice options -->
+            </div>
+        </div>
 
-/* ===== أدوات ===== */
-function show(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+        <div id="final-verdict" class="hidden glass-card p-8 text-center mt-6">
+            <h2 id="verdict-title" class="text-3xl font-bold mb-2"></h2>
+            <p id="verdict-msg" class="text-lg mb-6"></p>
+            <div class="space-y-4">
+                <button onclick="startNewRoundSamePlayers()" class="btn-primary w-full py-4 rounded-full text-xl font-bold">
+                    إعادة الدور (نفس اللعيبة)
+                </button>
+                <button onclick="resetGame()" class="bg-slate-700 w-full py-4 rounded-full text-xl font-bold">
+                    لعبة جديدة تماماً
+                </button>
+            </div>
+        </div>
+    </div>
 
-/* ===== إضافة لاعب ===== */
-function addPlayer(){
-  const input=document.getElementById("playerName");
-  if(!input.value) return;
-  players.push(input.value);
-  input.value="";
-  renderPlayers();
-}
-function renderPlayers(){
-  const div=document.getElementById("playersList");
-  div.innerHTML="";
-  players.forEach(p=>{
-    div.innerHTML+=`<div class="card">${p}</div>`;
-  });
-}
+    <div class="footer-note">© جميع الحقوق محفوظة لدى HOMOS</div>
 
-/* ===== بدء اللعبة ===== */
-function startGame(){
-  if(players.length<3) return alert("لازم 3 لاعبين على الأقل");
-  const cat=document.getElementById("category").value;
-  if(!cat) return alert("اختار فئة");
-  spyIndex=Math.floor(Math.random()*players.length);
-  word=words[cat][Math.floor(Math.random()*words[cat].length)];
-  revealIndex=0;
-  saveGame();
-  showReveal();
-}
+    <script>
+        const CATEGORY_DATA = {
+            "ملابس": { icon: "👕", words: ["قميص", "بنطلون", "فستان", "بدلة", "جرافيتة", "شراب", "كوتشي", "طاقية", "جاكيت", "بلوفر", "شورت", "طرحة", "خمار", "مايوه", "بيجامة", "كلسون", "عباية", "تيشيرت", "شال", "قفازات", "برنيطة", "بوت", "صندل", "حزام", "ببيونة"] },
+            "طعام": { icon: "🍔", words: ["كشري", "ملوخية", "محشي", "بيتزا", "برجر", "شاورما", "حواوشي", "فتة", "بامية", "ممبار", "كفتة", "طعمية", "فول", "رنجة", "فسيخ", "كبدة", "مكرونة بشاميل", "أرز بلبن", "كنافة", "بسبوسة", "قطايف", "حمام محشي", "سمك مشوي", "مسقعة", "مندي"] },
+            "مشروبات": { icon: "🥤", words: ["مانجو", "قصب", "تمر هندي", "سوبيا", "خروب", "عرقسوس", "شاي", "قهوة", "نسكافيه", "بيبسي", "عصير قصب", "كركديه", "ينسون", "نعناع", "ليمون بالنعناع", "فرابتشينو", "سموزي", "آيس تي", "قرفة", "سحلب", "كاكاو", "لبن", "ميرندا", "سبرايت", "عصير برتقال"] },
+            "لاعبين": { icon: "⚽", words: ["محمد صلاح", "ميسي", "رونالدو", "أبو تريكة", "مجدي أفشة", "زيزو", "شيكابالا", "مبابي", "هالاند", "نيمار", "بنزيما", "الشناوي", "عبد الله السعيد", "صالح جمعة", "حسام غالي", "بركات", "زيدان", "مودريتش", "دي بروين", "ليفاندوفسكي", "فينيسيوس", "بيلينجهام", "صلاح محسن", "كهربا", "إمام عاشور"] },
+            "أماكن": { icon: "📍", words: ["القاهرة", "الإسكندرية", "شرم الشيخ", "الأهرامات", "برج القاهرة", "وسط البلد", "الحسين", "الجونة", "مطروح", "الأقصر", "أسوان", "القلعة", "حديقة الحيوان", "المتحف المصري", "مول مصر", "كايرو فيستيفال", "الساحل الشمالي", "دهب", "خان الخليلي", "ميدان التحرير", "العاصمة الإدارية", "السخنة", "سيناء", "بورسعيد", "طنطا"] },
+            "أفلام": { icon: "🎬", words: ["الفيل الأزرق", "تيتو", "كراكون في الشارع", "اللمبي", "عسل أسود", "الناصر صلاح الدين", "الاختيار", "ما وراء الطبيعة", "اللعبة", "الكبير أوي", "جعفر العمدة", "سفاح الجيزة", "الحريفة", "ولاد رزق", "الجزيرة", "إبراهيم الأبيض", "طيور الظلام", "عوالم خفية", "رأفت الهجان", "ليالي الحلمية", "البخيل وأنا", "لن أعيش في جلباب أبي", "هروب اضطراري", "كازابلانكا", "الممر"] }
+        };
 
-/* ===== حفظ محلي 5 دقايق ===== */
-function saveGame(){
-  localStorage.setItem("bt_game",JSON.stringify({
-    players,spyIndex,word,time:Date.now()
-  }));
-}
-function loadGame(){
-  const g=JSON.parse(localStorage.getItem("bt_game"));
-  if(!g) return false;
-  if(Date.now()-g.time>5*60*1000){
-    localStorage.removeItem("bt_game");
-    return false;
-  }
-  players=g.players;
-  spyIndex=g.spyIndex;
-  word=g.word;
-  return true;
-}
+        let gameState = {
+            players: [],
+            category: "",
+            secretWord: "",
+            spyIndex: -1,
+            currentPlayerReveal: 0,
+            timer: 180,
+            timerId: null,
+            votes: {},
+            gameStartTime: null
+        };
 
-/* ===== كشف الأدوار ===== */
-function showReveal(){
-  show("revealScreen");
-  const name=players[revealIndex];
-  const text = revealIndex===spyIndex
-    ? `${name} أنت العرص 🤡`
-    : `${name} الكلمة هي: ${word}`;
-  document.getElementById("revealText").innerText=text;
-}
-function nextReveal(){
-  revealIndex++;
-  if(revealIndex>=players.length){
-    show("discussionScreen");
-  }else{
-    showReveal();
-  }
-}
+        const APP_ID = "homos_game_btl_tr3is_v2";
+        
+        function saveToStorage() {
+            gameState.gameStartTime = Date.now();
+            localStorage.setItem(APP_ID, JSON.stringify(gameState));
+        }
 
-/* ===== التصويت ===== */
-function startVoting(){
-  votes={};
-  voteTurn(0);
-}
-function voteTurn(i){
-  if(i>=players.length){
-    startCountdown();
-    return;
-  }
-  show("voteScreen");
-  document.getElementById("voteTitle").innerText=`${players[i]} شاكك في مين؟`;
-  const list=document.getElementById("voteList");
-  list.innerHTML="";
-  players.forEach(p=>{
-    if(p!==players[i]){
-      const b=document.createElement("button");
-      b.innerText=p;
-      b.onclick=()=>{votes[i]=p;voteTurn(i+1);}
-      list.appendChild(b);
-    }
-  });
-}
+        function loadFromStorage() {
+            const saved = localStorage.getItem(APP_ID);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Date.now() - parsed.gameStartTime < 300000) {
+                    gameState = parsed;
+                    if (gameState.players.length > 0) {
+                        document.getElementById('player-names').value = gameState.players.join('\n');
+                    }
+                }
+            }
+        }
 
-/* ===== عد تنازلي ===== */
-function startCountdown(){
-  show("countdownScreen");
-  let c=3;
-  const el=document.getElementById("countdown");
-  el.innerText=c;
-  const t=setInterval(()=>{
-    c--;
-    el.innerText=c;
-    if(c===0){
-      clearInterval(t);
-      showResult();
-    }
-  },1000);
-}
+        function navigateTo(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
 
-/* ===== النتيجة ===== */
-function showResult(){
-  show("resultScreen");
-  document.getElementById("resultText").innerText=
-    `العرص هو: ${players[spyIndex]}`;
-  const div=document.getElementById("spyGuess");
-  div.innerHTML="<h3>اختار الكلمة الصح:</h3>";
-  const options=[word];
-  while(options.length<4){
-    const w=Object.values(words).flat()
-      .filter(x=>x!==word)[Math.floor(Math.random()*10)];
-    if(!options.includes(w)) options.push(w);
-  }
-  options.sort(()=>Math.random()-0.5);
-  options.forEach(o=>{
-    const b=document.createElement("button");
-    b.innerText=o;
-    b.onclick=()=>{
-      alert(o===word?"👏 العرص كسب":"😂 العرص خسر");
-      localStorage.removeItem("bt_game");
-      location.reload();
-    };
-    div.appendChild(b);
-  });
-}
+        function savePlayers() {
+            const input = document.getElementById('player-names').value.trim();
+            if (!input) return;
+            gameState.players = input.split('\n').map(n => n.trim()).filter(n => n !== "");
+            if (gameState.players.length < 3) {
+                alert("لازم 3 لعيبة على الأقل!");
+                return;
+            }
+            renderCategories();
+            navigateTo('category-screen');
+            saveToStorage();
+        }
 
-/* ===== تحميل تلقائي ===== */
-if(loadGame()){
-  show("discussionScreen");
-}
-</script>
+        function renderCategories() {
+            const container = document.getElementById('categories-list');
+            container.innerHTML = '';
+            Object.entries(CATEGORY_DATA).forEach(([name, data]) => {
+                const btn = document.createElement('button');
+                btn.className = "glass-card p-4 text-lg font-bold hover:bg-rose-500/20 transition-all border-2 border-transparent hover:border-rose-500";
+                btn.innerHTML = `
+                    <span class="category-icon">${data.icon}</span>
+                    <span>${name}</span>
+                `;
+                btn.onclick = () => selectCategory(name);
+                container.appendChild(btn);
+            });
+        }
 
+        function selectCategory(cat) {
+            gameState.category = cat;
+            const words = CATEGORY_DATA[cat].words;
+            gameState.secretWord = words[Math.floor(Math.random() * words.length)];
+            gameState.spyIndex = Math.floor(Math.random() * gameState.players.length);
+            gameState.currentPlayerReveal = 0;
+            gameState.votes = {};
+            
+            initReveal();
+            navigateTo('reveal-screen');
+            saveToStorage();
+        }
+
+        function initReveal() {
+            const player = gameState.players[gameState.currentPlayerReveal];
+            document.getElementById('current-player-name').innerText = player;
+            document.getElementById('role-box').classList.add('hidden');
+            document.getElementById('toggle-role-btn').classList.remove('hidden');
+            document.getElementById('next-player-btn').classList.add('hidden');
+        }
+
+        function toggleRole() {
+            const isSpy = gameState.currentPlayerReveal === gameState.spyIndex;
+            const badge = document.getElementById('role-badge');
+            const wordDisplay = document.getElementById('secret-word-display');
+            
+            if (isSpy) {
+                badge.innerText = "أنت العرص";
+                wordDisplay.innerText = "🔒 غير معروف";
+            } else {
+                badge.innerText = "أنت برئ";
+                wordDisplay.innerText = gameState.secretWord;
+            }
+
+            document.getElementById('role-box').classList.remove('hidden');
+            document.getElementById('toggle-role-btn').classList.add('hidden');
+            document.getElementById('next-player-btn').classList.remove('hidden');
+        }
+
+        function nextPlayer() {
+            gameState.currentPlayerReveal++;
+            if (gameState.currentPlayerReveal < gameState.players.length) {
+                initReveal();
+                saveToStorage();
+            } else {
+                startTimer();
+                navigateTo('timer-screen');
+            }
+        }
+
+        function startTimer() {
+            gameState.timer = 180;
+            updateTimerUI();
+            if (gameState.timerId) clearInterval(gameState.timerId);
+            gameState.timerId = setInterval(() => {
+                gameState.timer--;
+                updateTimerUI();
+                if (gameState.timer <= 0) {
+                    clearInterval(gameState.timerId);
+                    startVoting();
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            const mins = Math.floor(gameState.timer / 60);
+            const secs = gameState.timer % 60;
+            document.getElementById('countdown-timer').innerText = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function startVoting() {
+            clearInterval(gameState.timerId);
+            const container = document.getElementById('voters-container');
+            container.innerHTML = '';
+            
+            gameState.players.forEach((p, idx) => {
+                const card = document.createElement('div');
+                card.className = "glass-card p-4";
+                card.innerHTML = `
+                    <p class="mb-3 text-rose-400 font-bold">${p} شاكك في مين؟</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${gameState.players.map((target, tIdx) => 
+                            `<button onclick="setVote(${idx}, ${tIdx})" id="v-${idx}-${tIdx}" class="vote-btn p-2 rounded-lg bg-slate-700 text-sm">
+                                ${target}
+                            </button>`
+                        ).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            navigateTo('voting-screen');
+        }
+
+        function setVote(voterIdx, targetIdx) {
+            gameState.votes[voterIdx] = targetIdx;
+            document.querySelectorAll(`[id^="v-${voterIdx}-"]`).forEach(b => b.classList.replace('bg-rose-500', 'bg-slate-700'));
+            document.getElementById(`v-${voterIdx}-${targetIdx}`).classList.replace('bg-slate-700', 'bg-rose-500');
+            saveToStorage();
+        }
+
+        function processVoting() {
+            if (Object.keys(gameState.votes).length < gameState.players.length) {
+                alert("لازم الكل يختار!");
+                return;
+            }
+            startDrama();
+        }
+
+        function startDrama() {
+            navigateTo('drama-screen');
+            let count = 3;
+            document.getElementById('drama-timer').innerText = count;
+            const interval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    document.getElementById('drama-timer').innerText = count;
+                } else {
+                    clearInterval(interval);
+                    showResults();
+                }
+            }, 1000);
+        }
+
+        function showResults() {
+            const spyName = gameState.players[gameState.spyIndex];
+            document.getElementById('actual-spy-name').innerText = spyName;
+            
+            let spyVotes = 0;
+            Object.values(gameState.votes).forEach(v => { if(v === gameState.spyIndex) spyVotes++; });
+            document.getElementById('voting-summary').innerText = `${spyVotes} من ${gameState.players.length} لعيبة قفشوا العرص!`;
+
+            const optionsContainer = document.getElementById('guess-options');
+            optionsContainer.innerHTML = '';
+            
+            let options = [gameState.secretWord];
+            const allWords = CATEGORY_DATA[gameState.category].words;
+            while(options.length < 4) {
+                const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
+                if (!options.includes(randomWord)) options.push(randomWord);
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "bg-slate-700 p-4 rounded-xl text-lg font-bold hover:bg-slate-600";
+                btn.innerText = opt;
+                btn.onclick = () => checkSpyGuess(opt);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('spy-guess-section').classList.remove('hidden');
+            document.getElementById('final-verdict').classList.add('hidden');
+            navigateTo('result-screen');
+        }
+
+        function checkSpyGuess(guessedWord) {
+            const isCorrect = guessedWord === gameState.secretWord;
+            const verdict = document.getElementById('final-verdict');
+            const title = document.getElementById('verdict-title');
+            const msg = document.getElementById('verdict-msg');
+
+            verdict.classList.remove('hidden');
+            document.getElementById('spy-guess-section').classList.add('hidden');
+
+            if (isCorrect) {
+                title.innerText = "العرص كسب! 🔥";
+                title.className = "text-3xl font-bold mb-2 text-green-400";
+                msg.innerText = "عرف يخلع! رغم إنكم قفشتوه بس هو عرف الكلمة في الآخر.";
+            } else {
+                title.innerText = "العرص خسر! 🤡";
+                title.className = "text-3xl font-bold mb-2 text-rose-500";
+                msg.innerText = `الكلمة كانت "${gameState.secretWord}".. العرص اتكشف وطلع بلح!`;
+            }
+        }
+
+        // Feature: Start new round with same players
+        function startNewRoundSamePlayers() {
+            renderCategories();
+            navigateTo('category-screen');
+        }
+
+        function resetGame() {
+            localStorage.removeItem(APP_ID);
+            location.reload();
+        }
+
+        window.onload = loadFromStorage;
+    </script>
 </body>
 </html>
+
