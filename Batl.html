@@ -1,703 +1,290 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بطل تعريص</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/lucide-react@latest"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بطل تعريص</title>
 
-    <style>
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: #0f172a; /* Slate 900 */
-            color: white;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        .app-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 4px;
-        }
-
-        .animate-pop {
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes pop {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .gradient-text {
-            background: linear-gradient(to right, #f87171, #facc15);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        /* Card Styles */
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-    </style>
+<style>
+*{
+  box-sizing:border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+}
+body{
+  margin:0;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:#fff;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+h1,h2,h3{
+  text-align:center;
+}
+button{
+  background:#00ffc8;
+  border:none;
+  padding:14px;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:active{transform:scale(0.97);}
+input,select{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  margin-bottom:10px;
+}
+.screen{
+  display:none;
+  padding:20px;
+  flex:1;
+}
+.screen.active{
+  display:block;
+}
+.card{
+  background:rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius:20px;
+  padding:20px;
+  margin-bottom:15px;
+}
+.footer{
+  text-align:center;
+  font-size:13px;
+  opacity:0.7;
+  padding:10px;
+}
+.list button{
+  width:100%;
+  margin-bottom:8px;
+}
+.countdown{
+  font-size:50px;
+  text-align:center;
+  margin-top:30px;
+}
+</style>
 </head>
+
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-        const { Users, Eye, EyeOff, Play, Timer, AlertTriangle, CheckCircle, Trophy, RefreshCcw, HelpCircle } = lucideReact;
+<!-- شاشة البداية -->
+<div class="screen active" id="startScreen">
+  <h1>🔥 بطل تعريص 🔥</h1>
+  <div class="card">
+    <input id="playerName" placeholder="اسم اللاعب">
+    <button onclick="addPlayer()">إضافة لاعب</button>
+    <div id="playersList"></div>
+  </div>
 
-        // --- WORD DATABASE ---
-        const GAME_DATA = {
-            "أكلات مصرية": [
-                "كشري", "مولوخية", "محشي", "فتة", "حواوشي", "فول وطعمية", "مسقعة", "كوارع", "ممبار", "بصارة",
-                "رنجة", "فسيخ", "كبدة إسكندراني", "شاورما", "حمام محشي", "أم علي", "بسبوسة", "كنافة", "زلابية", "فطير مشلتت"
-            ],
-            "ملابس": [
-                "بنطلون جينز", "تيشيرت", "قميص", "شراب", "بوكسر", "جزمة", "طاقية", "جاكيت", "بدلة", "كرافتة",
-                "بيجامة", "شبشب", "حزام", "بلوفر", "مايوه", "فستان", "طرحة", "عباية", "جوانتي", "سكارف"
-            ],
-            "مشروبات": [
-                "شاي", "قهوة", "نسكافية", "عصير قصب", "عصير مانجة", "سوبيا", "تمر هندي", "بيبسي", "مياة معدنية", "يانسون",
-                "كركدية", "سحلب", "حمص الشام", "موز باللبن", "ليمون بالنعناع", "فرابتشينو", "اسبريسو", "شاي بلبن", "خروب", "عرقسوس"
-            ],
-            "لاعيبة كورة": [
-                "محمد صلاح", "ميسي", "كريستيانو", "شيكابالا", "أفشة", "الشناوي", "زيزو", "أبو تريكة", "حازم إمام", "عماد متعب",
-                "سيد عبد الحفيظ", "وائل جمعة", "عصام الحضري", "نيمار", "مبابي", "هالاند", "دي بروين", "مودريتش", "بنزيمة", "ليفاندوفسكي"
-            ],
-            "أماكن": [
-                "الأهرامات", "برج القاهرة", "الساحل الشمالي", "دهب", "شرم الشيخ", "الإسكندرية", "محطة الرمل", "وسط البلد", "الحسين", "خان الخليلي",
-                "مول مصر", "سيتي ستارز", "المطار", "المترو", "السينما", "النادي", "القهوة", "الجامعة", "البيت", "السوبر ماركت"
-            ],
-            "أفلام ومسلسلات": [
-                "الكيف", "العار", "إبراهيم الأبيض", "الفيل الأزرق", "عسل أسود", "الناظر", "صعيدي في الجامعة الأمريكية", "همام في أمستردام", "اللمبي", "اللي بالي بالك",
-                "جعفر العمدة", "الأسطورة", "الاختيار", "الكبير أوي", "موضوع عائلي", "ما وراء الطبيعة", "اللعبة", "بـ 100 وش", "فرقة ناجي عطا الله", "ذئاب الجبل"
-            ],
-            "حيوانات": [
-                "أسد", "فيل", "زرافة", "كلب", "قطة", "حمار", "حصان", "جاموسة", "بقرة", "خروف",
-                "نسر", "صقر", "بغبان", "تمساح", "تعييان", "فار", "صرصار", "نملة", "دبانة", "ناموسة"
-            ]
-        };
+  <div class="card">
+    <select id="category">
+      <option value="">اختر الفئة</option>
+      <option value="players">أسماء لاعبين</option>
+      <option value="clothes">ملابس</option>
+      <option value="food">طعام</option>
+      <option value="drinks">مشروبات</option>
+    </select>
+    <button onclick="startGame()">ابدأ الجيم</button>
+  </div>
+</div>
 
-        const STORAGE_KEY = "batal_tarees_state";
-        const EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
+<!-- شاشة كشف الأدوار -->
+<div class="screen" id="revealScreen">
+  <h2 id="revealText"></h2>
+  <button onclick="nextReveal()">التالي</button>
+</div>
 
-        const App = () => {
-            // --- STATE ---
-            const [gameState, setGameState] = useState({
-                phase: 'WELCOME', // WELCOME, SETUP, CATEGORY, ROLE_ASSIGN, ROLE_REVEAL, GAME_LOOP, VOTING, REVEAL_RESULT, SPY_GUESS, END
-                players: [],
-                category: '',
-                secretWord: '',
-                spyIndex: -1,
-                currentPlayerIndex: 0, // For turning cards
-                startTime: 0,
-                votes: {}, // playerId -> targetId
-                voteResult: null, // who was voted out
-                spyGuessedCorrectly: false,
-                decoyWords: []
-            });
+<!-- شاشة النقاش -->
+<div class="screen" id="discussionScreen">
+  <h2>ناقشوا مين العرص 🤨</h2>
+  <p style="text-align:center">لما تخلصوا اضغطوا الزر</p>
+  <button onclick="startVoting()">عرفنا مين الجاسوس</button>
+</div>
 
-            // --- LOCAL STORAGE LOGIC ---
-            useEffect(() => {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    try {
-                        const parsed = JSON.parse(saved);
-                        const now = Date.now();
-                        // Check if data is fresh (less than 5 mins old)
-                        if (now - parsed.timestamp < EXPIRY_TIME) {
-                            setGameState(parsed.data);
-                        } else {
-                            localStorage.removeItem(STORAGE_KEY);
-                        }
-                    } catch (e) {
-                        console.error("Save file corrupted");
-                    }
-                }
-            }, []);
+<!-- شاشة التصويت -->
+<div class="screen" id="voteScreen">
+  <h2 id="voteTitle"></h2>
+  <div class="list" id="voteList"></div>
+</div>
 
-            useEffect(() => {
-                if (gameState.phase !== 'WELCOME') {
-                    const dataToSave = {
-                        data: gameState,
-                        timestamp: Date.now()
-                    };
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-                }
-            }, [gameState]);
+<!-- العد التنازلي -->
+<div class="screen" id="countdownScreen">
+  <div class="countdown" id="countdown">3</div>
+</div>
 
-            // --- ACTIONS ---
+<!-- النتيجة -->
+<div class="screen" id="resultScreen">
+  <h2 id="resultText"></h2>
+  <div id="spyGuess"></div>
+</div>
 
-            const startGame = (names) => {
-                if (names.length < 3) {
-                    alert("لازم على الأقل 3 لعيبة يا صاحبي");
-                    return;
-                }
-                setGameState(prev => ({
-                    ...prev,
-                    phase: 'CATEGORY',
-                    players: names.map((n, i) => ({ id: i, name: n })),
-                    votes: {}
-                }));
-            };
+<div class="footer">
+© جميع الحقوق محفوظة لدى HOMOS
+</div>
 
-            const selectCategory = (cat) => {
-                const words = GAME_DATA[cat];
-                const secret = words[Math.floor(Math.random() * words.length)];
-                
-                // Select Spy
-                const spyIdx = Math.floor(Math.random() * gameState.players.length);
+<script>
+/* ===== البيانات ===== */
+const words = {
+  players:["ميسي","رونالدو","صلاح","نيمار","زيدان","إنييستا"],
+  clothes:["تيشيرت","جاكيت","بنطلون","حذاء","كاب"],
+  food:["بيتزا","كشري","برجر","محشي","شاورما"],
+  drinks:["قهوة","شاي","بيبسي","عصير","نسكافيه"]
+};
 
-                // Prepare decoys for the end game (Spy Guess)
-                const otherWords = words.filter(w => w !== secret);
-                const shuffledOthers = otherWords.sort(() => 0.5 - Math.random()).slice(0, 3);
-                const decoys = [secret, ...shuffledOthers].sort(() => 0.5 - Math.random());
+let players=[];
+let spyIndex=0;
+let word="";
+let revealIndex=0;
+let votes={};
 
-                setGameState(prev => ({
-                    ...prev,
-                    phase: 'ROLE_REVEAL',
-                    category: cat,
-                    secretWord: secret,
-                    spyIndex: spyIdx,
-                    currentPlayerIndex: 0,
-                    decoyWords: decoys,
-                    startTime: Date.now() // Reset timer relative to game logic if needed
-                }));
-            };
+/* ===== أدوات ===== */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
 
-            const nextPlayerReveal = () => {
-                if (gameState.currentPlayerIndex < gameState.players.length - 1) {
-                    setGameState(prev => ({ ...prev, currentPlayerIndex: prev.currentPlayerIndex + 1 }));
-                } else {
-                    setGameState(prev => ({ ...prev, phase: 'GAME_LOOP' }));
-                }
-            };
+/* ===== إضافة لاعب ===== */
+function addPlayer(){
+  const input=document.getElementById("playerName");
+  if(!input.value) return;
+  players.push(input.value);
+  input.value="";
+  renderPlayers();
+}
+function renderPlayers(){
+  const div=document.getElementById("playersList");
+  div.innerHTML="";
+  players.forEach(p=>{
+    div.innerHTML+=`<div class="card">${p}</div>`;
+  });
+}
 
-            const goToVoting = () => {
-                setGameState(prev => ({ ...prev, phase: 'VOTING' }));
-            };
+/* ===== بدء اللعبة ===== */
+function startGame(){
+  if(players.length<3) return alert("لازم 3 لاعبين على الأقل");
+  const cat=document.getElementById("category").value;
+  if(!cat) return alert("اختار فئة");
+  spyIndex=Math.floor(Math.random()*players.length);
+  word=words[cat][Math.floor(Math.random()*words[cat].length)];
+  revealIndex=0;
+  saveGame();
+  showReveal();
+}
 
-            const castVote = (voterId, suspectId) => {
-                setGameState(prev => {
-                    const newVotes = { ...prev.votes, [voterId]: suspectId };
-                    
-                    // If everyone voted
-                    if (Object.keys(newVotes).length === prev.players.length) {
-                        // Calculate result
-                        const voteCounts = {};
-                        Object.values(newVotes).forEach(id => {
-                            voteCounts[id] = (voteCounts[id] || 0) + 1;
-                        });
-                        
-                        // Find who got the most votes
-                        let maxVotes = -1;
-                        let suspect = null;
-                        
-                        Object.entries(voteCounts).forEach(([id, count]) => {
-                            if (count > maxVotes) {
-                                maxVotes = count;
-                                suspect = parseInt(id);
-                            }
-                        });
+/* ===== حفظ محلي 5 دقايق ===== */
+function saveGame(){
+  localStorage.setItem("bt_game",JSON.stringify({
+    players,spyIndex,word,time:Date.now()
+  }));
+}
+function loadGame(){
+  const g=JSON.parse(localStorage.getItem("bt_game"));
+  if(!g) return false;
+  if(Date.now()-g.time>5*60*1000){
+    localStorage.removeItem("bt_game");
+    return false;
+  }
+  players=g.players;
+  spyIndex=g.spyIndex;
+  word=g.word;
+  return true;
+}
 
-                        // 1 second delay for dramatic effect handled in component
-                        setTimeout(() => {
-                            setGameState(p => ({ ...p, phase: 'REVEAL_RESULT', voteResult: suspect }));
-                        }, 500);
+/* ===== كشف الأدوار ===== */
+function showReveal(){
+  show("revealScreen");
+  const name=players[revealIndex];
+  const text = revealIndex===spyIndex
+    ? `${name} أنت العرص 🤡`
+    : `${name} الكلمة هي: ${word}`;
+  document.getElementById("revealText").innerText=text;
+}
+function nextReveal(){
+  revealIndex++;
+  if(revealIndex>=players.length){
+    show("discussionScreen");
+  }else{
+    showReveal();
+  }
+}
 
-                        return { ...prev, votes: newVotes };
-                    }
-                    
-                    return { ...prev, votes: newVotes };
-                });
-            };
+/* ===== التصويت ===== */
+function startVoting(){
+  votes={};
+  voteTurn(0);
+}
+function voteTurn(i){
+  if(i>=players.length){
+    startCountdown();
+    return;
+  }
+  show("voteScreen");
+  document.getElementById("voteTitle").innerText=`${players[i]} شاكك في مين؟`;
+  const list=document.getElementById("voteList");
+  list.innerHTML="";
+  players.forEach(p=>{
+    if(p!==players[i]){
+      const b=document.createElement("button");
+      b.innerText=p;
+      b.onclick=()=>{votes[i]=p;voteTurn(i+1);}
+      list.appendChild(b);
+    }
+  });
+}
 
-            const handleSpyGuess = (word) => {
-                const isCorrect = word === gameState.secretWord;
-                setGameState(prev => ({
-                    ...prev,
-                    phase: 'END',
-                    spyGuessedCorrectly: isCorrect
-                }));
-            };
+/* ===== عد تنازلي ===== */
+function startCountdown(){
+  show("countdownScreen");
+  let c=3;
+  const el=document.getElementById("countdown");
+  el.innerText=c;
+  const t=setInterval(()=>{
+    c--;
+    el.innerText=c;
+    if(c===0){
+      clearInterval(t);
+      showResult();
+    }
+  },1000);
+}
 
-            const resetGame = () => {
-                localStorage.removeItem(STORAGE_KEY);
-                setGameState({
-                    phase: 'WELCOME',
-                    players: [],
-                    category: '',
-                    secretWord: '',
-                    spyIndex: -1,
-                    currentPlayerIndex: 0,
-                    startTime: 0,
-                    votes: {},
-                    voteResult: null,
-                    spyGuessedCorrectly: false,
-                    decoyWords: []
-                });
-            };
+/* ===== النتيجة ===== */
+function showResult(){
+  show("resultScreen");
+  document.getElementById("resultText").innerText=
+    `العرص هو: ${players[spyIndex]}`;
+  const div=document.getElementById("spyGuess");
+  div.innerHTML="<h3>اختار الكلمة الصح:</h3>";
+  const options=[word];
+  while(options.length<4){
+    const w=Object.values(words).flat()
+      .filter(x=>x!==word)[Math.floor(Math.random()*10)];
+    if(!options.includes(w)) options.push(w);
+  }
+  options.sort(()=>Math.random()-0.5);
+  options.forEach(o=>{
+    const b=document.createElement("button");
+    b.innerText=o;
+    b.onclick=()=>{
+      alert(o===word?"👏 العرص كسب":"😂 العرص خسر");
+      localStorage.removeItem("bt_game");
+      location.reload();
+    };
+    div.appendChild(b);
+  });
+}
 
-            const restartSamePlayers = () => {
-                setGameState(prev => ({
-                    phase: 'CATEGORY',
-                    players: prev.players,
-                    category: '',
-                    secretWord: '',
-                    spyIndex: -1,
-                    currentPlayerIndex: 0,
-                    startTime: 0,
-                    votes: {},
-                    voteResult: null,
-                    spyGuessedCorrectly: false,
-                    decoyWords: []
-                }));
-            };
+/* ===== تحميل تلقائي ===== */
+if(loadGame()){
+  show("discussionScreen");
+}
+</script>
 
-            // --- RENDER HELPERS ---
-            
-            const renderPhase = () => {
-                switch(gameState.phase) {
-                    case 'WELCOME': return <WelcomeScreen onStart={() => setGameState(p => ({...p, phase: 'SETUP'}))} />;
-                    case 'SETUP': return <SetupScreen onStart={startGame} />;
-                    case 'CATEGORY': return <CategoryScreen categories={Object.keys(GAME_DATA)} onSelect={selectCategory} />;
-                    case 'ROLE_REVEAL': 
-                        return <RoleRevealScreen 
-                                player={gameState.players[gameState.currentPlayerIndex]} 
-                                isSpy={gameState.currentPlayerIndex === gameState.spyIndex}
-                                secretWord={gameState.secretWord}
-                                category={gameState.category}
-                                onNext={nextPlayerReveal}
-                                isLast={gameState.currentPlayerIndex === gameState.players.length - 1}
-                               />;
-                    case 'GAME_LOOP': return <GameLoopScreen onVote={goToVoting} category={gameState.category} />;
-                    case 'VOTING': return <VotingScreen players={gameState.players} votes={gameState.votes} onVote={castVote} />;
-                    case 'REVEAL_RESULT': 
-                        return <RevealResultScreen 
-                                players={gameState.players} 
-                                spyIndex={gameState.spyIndex} 
-                                voteResult={gameState.voteResult}
-                                onNext={() => setGameState(p => ({...p, phase: 'SPY_GUESS'}))}
-                               />;
-                    case 'SPY_GUESS':
-                        return <SpyGuessScreen 
-                                spyName={gameState.players[gameState.spyIndex].name}
-                                options={gameState.decoyWords}
-                                onGuess={handleSpyGuess}
-                               />;
-                    case 'END':
-                        return <EndScreen 
-                                state={gameState}
-                                onRestart={restartSamePlayers}
-                                onHome={resetGame}
-                               />;
-                    default: return <div>Loading...</div>;
-                }
-            };
-
-            return (
-                <div className="app-container">
-                    <div className="flex-grow p-4 max-w-md mx-auto w-full relative">
-                        {renderPhase()}
-                    </div>
-                    
-                    <footer className="p-4 text-center text-slate-500 text-xs font-semibold bg-slate-900/90 backdrop-blur border-t border-slate-800">
-                        <p>© جميع الحقوق محفوظة لدى HOMOS</p>
-                    </footer>
-                </div>
-            );
-        };
-
-        // --- COMPONENTS ---
-
-        const WelcomeScreen = ({ onStart }) => (
-            <div className="flex flex-col items-center justify-center h-full pt-20 animate-pop">
-                <div className="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center mb-6 shadow-red-900/50 shadow-lg">
-                    <EyeOff size={48} className="text-white" />
-                </div>
-                <h1 className="text-5xl font-extrabold mb-2 text-center text-red-500 tracking-tight">بطل تعريص</h1>
-                <p className="text-slate-400 mb-12 text-lg">مين فينا العرص؟</p>
-                
-                <button onClick={onStart} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg transform transition active:scale-95 text-xl flex items-center justify-center gap-2">
-                    <Play size={24} fill="currentColor" />
-                    <span>ابدأ اللعب</span>
-                </button>
-            </div>
-        );
-
-        const SetupScreen = ({ onStart }) => {
-            const [text, setText] = useState("");
-            
-            const handleSubmit = () => {
-                const names = text.split('\n').map(n => n.trim()).filter(n => n.length > 0);
-                onStart(names);
-            };
-
-            return (
-                <div className="animate-pop h-full flex flex-col">
-                    <h2 className="text-2xl font-bold mb-6 text-center text-red-400">سجل أسماء اللعيبة</h2>
-                    <div className="flex-grow">
-                        <textarea 
-                            className="w-full h-64 bg-slate-800 border-2 border-slate-700 rounded-xl p-4 text-white text-lg focus:border-red-500 focus:outline-none placeholder-slate-500"
-                            placeholder={"اكتب كل اسم في سطر...\nأحمد\nمحمد\nمحمود"}
-                            value={text}
-                            onChange={(e) => setText(e.target.value)}
-                        ></textarea>
-                        <p className="text-sm text-slate-500 mt-2 text-center">لازم على الأقل 3 لعيبة</p>
-                    </div>
-                    <button onClick={handleSubmit} className="w-full bg-slate-100 text-slate-900 font-bold py-4 rounded-xl shadow-lg mt-4 text-xl">
-                        التالي
-                    </button>
-                </div>
-            );
-        };
-
-        const CategoryScreen = ({ categories, onSelect }) => (
-            <div className="animate-pop">
-                <h2 className="text-2xl font-bold mb-6 text-center text-yellow-400">اختار الموضوع</h2>
-                <div className="grid grid-cols-2 gap-4">
-                    {categories.map(cat => (
-                        <button 
-                            key={cat}
-                            onClick={() => onSelect(cat)}
-                            className="aspect-square bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition active:scale-95"
-                        >
-                            <span className="text-3xl">
-                                {cat === "أكلات مصرية" ? "🍔" : 
-                                 cat === "ملابس" ? "👕" :
-                                 cat === "مشروبات" ? "☕" :
-                                 cat === "لاعيبة كورة" ? "⚽" :
-                                 cat === "أماكن" ? "🏛️" :
-                                 cat === "حيوانات" ? "🦁" : "🎬"}
-                            </span>
-                            <span className="font-bold text-lg text-center">{cat}</span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-        );
-
-        const RoleRevealScreen = ({ player, isSpy, secretWord, category, onNext, isLast }) => {
-            const [revealed, setRevealed] = useState(false);
-
-            // Reset revealed state when player changes
-            useEffect(() => {
-                setRevealed(false);
-            }, [player]);
-
-            return (
-                <div className="h-full flex flex-col items-center justify-center animate-pop">
-                    <div className="w-full max-w-sm glass-card rounded-3xl p-8 text-center relative overflow-hidden">
-                        
-                        <div className="mb-6">
-                            <h3 className="text-slate-400 text-lg mb-2">الدور على</h3>
-                            <h2 className="text-4xl font-bold text-white">{player.name}</h2>
-                        </div>
-
-                        {!revealed ? (
-                            <button 
-                                onClick={() => setRevealed(true)}
-                                className="w-full aspect-square rounded-full bg-red-600/20 border-4 border-red-500 flex flex-col items-center justify-center gap-4 animate-pulse active:bg-red-600/40 transition"
-                            >
-                                <Eye size={48} className="text-red-500" />
-                                <span className="text-xl font-bold text-red-100">دوس عشان تشوف دورك</span>
-                            </button>
-                        ) : (
-                            <div className="flex flex-col items-center animate-pop">
-                                {isSpy ? (
-                                    <>
-                                        <div className="w-32 h-32 bg-red-600 rounded-full flex items-center justify-center mb-4">
-                                            <EyeOff size={64} className="text-white" />
-                                        </div>
-                                        <h2 className="text-3xl font-black text-red-500 mb-2">أنت العرص!</h2>
-                                        <p className="text-slate-300 mb-6">حاول تعرف إحنا بنتكلم عن إيه من غير ما تتكشف.</p>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="w-32 h-32 bg-green-600 rounded-full flex items-center justify-center mb-4">
-                                            <CheckCircle size={64} className="text-white" />
-                                        </div>
-                                        <h2 className="text-3xl font-black text-green-500 mb-2">مواطن شريف</h2>
-                                        <div className="bg-slate-800 p-4 rounded-xl w-full mb-2">
-                                            <p className="text-slate-400 text-sm">الموضوع</p>
-                                            <p className="text-xl font-bold text-yellow-400">{category}</p>
-                                        </div>
-                                        <div className="bg-slate-800 p-4 rounded-xl w-full mb-6">
-                                            <p className="text-slate-400 text-sm">الكلمة السرية</p>
-                                            <p className="text-2xl font-bold text-white">{secretWord}</p>
-                                        </div>
-                                    </>
-                                )}
-                                
-                                <button 
-                                    onClick={onNext}
-                                    className="w-full bg-white text-slate-900 font-bold py-3 rounded-xl hover:bg-slate-200"
-                                >
-                                    {isLast ? "يلا نبدأ اللعب" : "تمام، هات اللي بعده"}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                    {!revealed && (
-                        <p className="mt-8 text-slate-500 text-sm text-center px-8">
-                            خبي الموبايل ودوس على الزرار عشان تعرف دورك ومحدش يشوف غيرك.
-                        </p>
-                    )}
-                </div>
-            );
-        };
-
-        const GameLoopScreen = ({ onVote, category }) => {
-            const [time, setTime] = useState(0);
-
-            useEffect(() => {
-                const interval = setInterval(() => {
-                    setTime(t => t + 1);
-                }, 1000);
-                return () => clearInterval(interval);
-            }, []);
-
-            const formatTime = (seconds) => {
-                const m = Math.floor(seconds / 60);
-                const s = seconds % 60;
-                return `${m}:${s < 10 ? '0' : ''}${s}`;
-            };
-
-            return (
-                <div className="h-full flex flex-col items-center pt-10 animate-pop">
-                    <div className="text-center mb-10">
-                        <p className="text-slate-400 mb-2">الموضوع</p>
-                        <h2 className="text-3xl font-bold text-yellow-400">{category}</h2>
-                    </div>
-
-                    <div className="w-48 h-48 rounded-full border-8 border-slate-700 flex flex-col items-center justify-center mb-12 shadow-[0_0_30px_rgba(255,0,0,0.1)]">
-                        <Timer size={40} className="text-slate-500 mb-2" />
-                        <span className="text-5xl font-mono font-bold text-white">{formatTime(time)}</span>
-                    </div>
-
-                    <div className="w-full mt-auto mb-8 px-4">
-                        <button 
-                            onClick={onVote}
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-6 px-8 rounded-3xl shadow-lg transform transition active:scale-95 text-2xl border-b-4 border-red-800"
-                        >
-                            عرفنا مين العرص!
-                        </button>
-                        <p className="text-center text-slate-500 mt-4 text-sm">دوس هنا لما تشكوا في حد أو الوقت يخلص</p>
-                    </div>
-                </div>
-            );
-        };
-
-        const VotingScreen = ({ players, votes, onVote }) => {
-            // Find first player who hasn't voted
-            const currentVoterId = players.find(p => !votes[p.id])?.id;
-            
-            // If everyone voted, we wait for parent to switch phase (logic handled in castVote)
-            if (currentVoterId === undefined) return <div className="flex items-center justify-center h-full"><span className="text-2xl animate-pulse">جاري فرز الأصوات...</span></div>;
-
-            const currentVoter = players.find(p => p.id === currentVoterId);
-
-            return (
-                <div className="h-full flex flex-col pt-10 animate-pop">
-                    <div className="text-center mb-8">
-                        <h3 className="text-slate-400 mb-1">دور</h3>
-                        <h2 className="text-3xl font-bold text-white">{currentVoter.name}</h2>
-                        <p className="text-red-400 mt-2 font-bold">شاكك في مين؟</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3 overflow-y-auto pb-4">
-                        {players.map(p => {
-                            // Can't vote for self
-                            if (p.id === currentVoterId) return null;
-                            return (
-                                <button
-                                    key={p.id}
-                                    onClick={() => onVote(currentVoterId, p.id)}
-                                    className="bg-slate-800 p-4 rounded-xl flex items-center justify-between hover:bg-slate-700 border border-slate-700"
-                                >
-                                    <span className="font-bold text-lg">{p.name}</span>
-                                    <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 flex items-center justify-center">?</div>
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-            );
-        };
-
-        const RevealResultScreen = ({ players, spyIndex, voteResult, onNext }) => {
-            const [countdown, setCountdown] = useState(3);
-            const [revealed, setRevealed] = useState(false);
-
-            useEffect(() => {
-                if (countdown > 0) {
-                    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
-                    return () => clearTimeout(timer);
-                } else {
-                    setRevealed(true);
-                }
-            }, [countdown]);
-
-            const spyName = players[spyIndex].name;
-            const votedName = players.find(p => p.id === voteResult)?.name;
-            const caught = voteResult === spyIndex;
-
-            if (!revealed) {
-                return (
-                    <div className="h-full flex flex-col items-center justify-center">
-                        <div className="text-9xl font-black text-red-600 animate-bounce">
-                            {countdown}
-                        </div>
-                        <p className="mt-8 text-xl text-slate-400">مين العرص...</p>
-                    </div>
-                );
-            }
-
-            return (
-                <div className="h-full flex flex-col items-center justify-center animate-pop text-center">
-                    <h2 className="text-xl text-slate-400 mb-2">العرص الحقيقي هو</h2>
-                    <h1 className="text-5xl font-black text-red-500 mb-8">{spyName}</h1>
-
-                    <div className="glass-card p-6 rounded-2xl w-full mb-8">
-                        <h3 className="text-lg text-slate-300 mb-2">نتيجة التصويت</h3>
-                        <p className="text-xl font-bold">
-                            الناس شكت في <span className="text-yellow-400">{votedName}</span>
-                        </p>
-                        <div className={`mt-4 text-2xl font-bold ${caught ? 'text-green-400' : 'text-red-400'}`}>
-                            {caught ? "قفشتوه! 👏" : "العرص هرب! 🏃"}
-                        </div>
-                    </div>
-
-                    <button 
-                        onClick={onNext}
-                        className="w-full bg-white text-slate-900 font-bold py-4 rounded-xl shadow-lg text-lg"
-                    >
-                        التالي
-                    </button>
-                </div>
-            );
-        };
-
-        const SpyGuessScreen = ({ spyName, options, onGuess }) => (
-            <div className="h-full flex flex-col animate-pop pt-8">
-                <div className="text-center mb-8">
-                    <h3 className="text-slate-400">فرصة أخيرة لـ</h3>
-                    <h2 className="text-3xl font-bold text-red-500 mb-4">{spyName}</h2>
-                    <p className="text-white text-xl font-bold bg-slate-800 py-2 px-4 rounded-lg inline-block">
-                        قولنا الكلمة كانت إيه؟
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
-                    {options.map((word, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => onGuess(word)}
-                            className="bg-slate-700 hover:bg-slate-600 border border-slate-500 text-white font-bold py-4 px-6 rounded-xl text-xl transition active:scale-95"
-                        >
-                            {word}
-                        </button>
-                    ))}
-                </div>
-            </div>
-        );
-
-        const EndScreen = ({ state, onRestart, onHome }) => {
-            // Logic for winner:
-            // 1. If Spy was NOT caught in voting -> Spy Wins.
-            // 2. If Spy WAS caught, but guessed word correctly -> Spy Wins.
-            // 3. If Spy WAS caught and guessed WRONG -> Citizens Win.
-            
-            const spyCaught = state.voteResult === state.spyIndex;
-            const spyGuessedRight = state.spyGuessedCorrectly;
-            
-            let spyWins = false;
-            let title = "";
-            let message = "";
-
-            if (!spyCaught) {
-                spyWins = true;
-                title = "العرص كسب!";
-                message = "محدش عرف يكشفه وخلع منكم.";
-            } else if (spyGuessedRight) {
-                spyWins = true;
-                title = "العرص كسب!";
-                message = "قفشتوه، بس هو عرف الكلمة السرية!";
-            } else {
-                spyWins = false;
-                title = "المواطنين كسبوا!";
-                message = "قفشتوه ومعرفش الكلمة. تحيا مصر!";
-            }
-
-            return (
-                <div className="h-full flex flex-col items-center justify-center animate-pop text-center">
-                    <div className="mb-6">
-                        {spyWins ? (
-                            <EyeOff size={80} className="text-red-500 mx-auto" />
-                        ) : (
-                            <Trophy size={80} className="text-yellow-400 mx-auto" />
-                        )}
-                    </div>
-                    
-                    <h1 className={`text-4xl font-black mb-4 ${spyWins ? 'text-red-500' : 'text-yellow-400'}`}>
-                        {title}
-                    </h1>
-                    <p className="text-xl text-slate-300 mb-8 max-w-xs mx-auto leading-relaxed">
-                        {message}
-                    </p>
-
-                    <div className="bg-slate-800 p-6 rounded-2xl w-full mb-8 border border-slate-700">
-                        <p className="text-slate-400 text-sm mb-1">الكلمة كانت</p>
-                        <p className="text-3xl font-bold text-white">{state.secretWord}</p>
-                    </div>
-
-                    <div className="w-full space-y-3">
-                        <button 
-                            onClick={onRestart}
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2"
-                        >
-                            <RefreshCcw size={20} />
-                            <span>لعبة كمان بنفس الأسماء</span>
-                        </button>
-                        <button 
-                            onClick={onHome}
-                            className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl"
-                        >
-                            خروج
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
 </body>
 </html>
-
