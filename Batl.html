@@ -3,669 +3,651 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>لعبة العتاولة - شوارع مصر</title>
+    <title>تطبيق وصلة | Waslah Pro</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8b5cf6', // Violet
+                        secondary: '#06b6d4', // Cyan
+                        dark: '#0f172a',
+                        surface: '#1e293b'
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-in': 'bounceIn 0.5s ease-out',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.3)', opacity: '0' },
+                            '50%': { transform: 'scale(1.05)' },
+                            '70%': { transform: 'scale(0.9)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #87CEEB; /* لون السماء */
+            -webkit-tap-highlight-color: transparent;
             font-family: 'Cairo', sans-serif;
-            touch-action: none; /* لمنع التكبير بالسحب */
-        }
-
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100vh;
-        }
-
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .score-board {
-            padding: 20px;
-            font-size: 24px;
-            color: white;
-            text-shadow: 2px 2px 4px #000;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            pointer-events: none;
-        }
-
-        #startScreen, #gameOverScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            pointer-events: auto;
-            z-index: 10;
-        }
-
-        h1 {
-            color: #ffcc00;
-            font-size: 60px;
-            margin: 0;
-            text-shadow: 3px 3px 0 #b33c00;
-            animation: pulse 1.5s infinite;
-        }
-
-        p {
-            color: white;
-            font-size: 20px;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .btn {
-            margin-top: 30px;
-            padding: 15px 40px;
-            font-size: 24px;
-            font-family: 'Cairo', sans-serif;
-            background: linear-gradient(45deg, #ff6b6b, #c0392b);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
-        }
-
-        .btn:active {
-            transform: scale(0.95);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
         }
         
-        /* تعليمات التحكم للموبايل والكمبيوتر */
-        .controls-hint {
-            font-size: 14px;
-            opacity: 0.8;
-            margin-top: 20px;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #8b5cf6; border-radius: 4px; }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-light {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-left-color: #06b6d4;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Hide Number Input Arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-900 dark:bg-dark dark:text-white transition-colors duration-300 min-h-screen overflow-x-hidden pb-20 selection:bg-primary selection:text-white">
 
-    <!-- UI Layer -->
-    <div id="ui-layer">
-        <div class="score-board">
-            <span id="scoreDisplay">النتيجة: 0</span>
-            <span id="coinsDisplay">الجنيهات: 0</span>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="fixed inset-0 z-[100] bg-dark flex flex-col items-center justify-center transition-opacity duration-700">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-4xl font-bold text-white shadow-2xl shadow-primary/40 animate-bounce">
+            و
+        </div>
+        <h1 class="text-3xl font-bold mt-4 text-white tracking-wide">وصلة <span class="text-secondary text-sm font-normal">PRO</span></h1>
+        <p class="text-gray-400 text-sm mt-2">كل تواصلك.. في وصلة واحدة</p>
+    </div>
+
+    <!-- Header -->
+    <header id="main-header" class="fixed top-0 w-full z-40 transition-all duration-300 glass dark:border-b dark:border-gray-800 shadow-sm">
+        <div class="container mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold shadow-lg">و</div>
+                <h1 class="text-lg font-bold dark:text-white text-gray-800">وصلة</h1>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-yellow-400 transition-transform active:scale-95">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+                <div class="relative">
+                    <div class="w-2 h-2 bg-red-500 rounded-full absolute top-0 right-0 animate-ping"></div>
+                    <button onclick="showPage('notifications')" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="container mx-auto pt-20 px-4 min-h-screen">
+        
+        <!-- PAGE: DOWNLOADER (HOME) -->
+        <section id="page-home" class="page-section space-y-6 animate-fade-in">
+            <!-- Hero Section -->
+            <div class="text-center py-4">
+                <h2 class="text-2xl font-bold mb-2">تحميل المحتوى <span class="text-primary">الذكي</span></h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">انسخ الرابط من أي منصة، واترك الباقي لوصلة</p>
+            </div>
+
+            <!-- Input Area -->
+            <div class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                <div class="relative bg-white dark:bg-surface rounded-2xl p-4 shadow-xl border border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center gap-3 bg-gray-50 dark:bg-dark/50 rounded-xl px-4 py-3 border border-gray-200 dark:border-gray-700 focus-within:border-primary transition-colors">
+                        <i class="fas fa-link text-gray-400"></i>
+                        <input type="text" id="urlInput" placeholder="الصق رابط الفيديو أو الصورة هنا..." 
+                            class="bg-transparent border-none outline-none w-full text-sm dark:text-white">
+                        <button onclick="pasteFromClipboard()" class="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20">لصق</button>
+                    </div>
+
+                    <!-- Smart Options (New Features) -->
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <label class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer select-none">
+                            <input type="checkbox" id="opt-mp3" class="accent-primary w-4 h-4 rounded">
+                            <span><i class="fas fa-music text-primary mr-1"></i> استخراج صوت (MP3)</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer select-none">
+                            <input type="checkbox" id="opt-watermark" class="accent-secondary w-4 h-4 rounded" checked>
+                            <span><i class="fas fa-magic text-secondary mr-1"></i> حذف العلامة المائية</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer select-none">
+                            <input type="checkbox" id="opt-story" class="accent-pink-500 w-4 h-4 rounded">
+                            <span><i class="fas fa-circle-notch text-pink-500 mr-1"></i> وضع الستوري</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer select-none">
+                            <input type="checkbox" id="opt-data" class="accent-green-500 w-4 h-4 rounded">
+                            <span><i class="fas fa-leaf text-green-500 mr-1"></i> توفير البيانات</span>
+                        </label>
+                    </div>
+
+                    <button onclick="startDownload()" class="w-full mt-5 bg-gradient-to-r from-primary to-secondary hover:brightness-110 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-primary/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        <span id="btn-text">تحميل الآن</span>
+                        <i id="btn-icon" class="fas fa-cloud-download-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Supported Platforms -->
+            <div class="flex justify-between items-center px-2 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                <i class="fab fa-instagram text-2xl text-pink-500"></i>
+                <i class="fab fa-tiktok text-2xl text-black dark:text-white"></i>
+                <i class="fab fa-youtube text-2xl text-red-600"></i>
+                <i class="fab fa-twitter text-2xl text-blue-400"></i>
+                <i class="fab fa-facebook text-2xl text-blue-600"></i>
+                <i class="fab fa-snapchat text-2xl text-yellow-400"></i>
+            </div>
+
+            <!-- Recent Activity (New Feature: History) -->
+            <div class="mt-8">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-gray-800 dark:text-white">آخر النشاطات</h3>
+                    <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-500">مسح السجل</button>
+                </div>
+                <div id="history-list" class="space-y-3">
+                    <!-- History items will be injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: TOOLS -->
+        <section id="page-tools" class="page-section hidden space-y-6 animate-fade-in">
+            <h2 class="text-2xl font-bold mb-4">الأدوات <span class="text-secondary">الذكية</span></h2>
+            
+            <!-- Tool 1: Speed Test (New) -->
+            <div class="bg-white dark:bg-surface p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="font-bold text-lg">فحص سرعة النت</h3>
+                        <p class="text-xs text-gray-500">تأكد من جودة اتصالك قبل التحميل</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                </div>
+                <div class="flex items-end gap-2">
+                    <span id="speed-value" class="text-4xl font-black text-gray-800 dark:text-white">0.0</span>
+                    <span class="text-sm text-gray-500 mb-2">MB/s</span>
+                </div>
+                <button onclick="runSpeedTest()" class="mt-4 w-full py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">ابدأ الفحص</button>
+            </div>
+
+            <!-- Tool 2: Hashtag Generator -->
+            <div class="bg-white dark:bg-surface p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-hashtag text-primary"></i>
+                    <h3 class="font-bold">مولد الهاشتاجات</h3>
+                </div>
+                <input type="text" id="hashtag-input" placeholder="اكتب كلمة (مثلاً: سياحة)" class="w-full bg-gray-50 dark:bg-dark p-3 rounded-xl text-sm outline-none border border-transparent focus:border-primary mb-3">
+                <button onclick="generateHashtags()" class="w-full py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-lg shadow-primary/20">توليد</button>
+                <div id="hashtag-result" class="mt-3 text-xs text-gray-500 leading-relaxed bg-gray-50 dark:bg-dark p-3 rounded-lg hidden select-all"></div>
+            </div>
+
+            <!-- Tool 3: Link Cleaner (New) -->
+            <div class="bg-white dark:bg-surface p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-broom text-orange-500"></i>
+                    <h3 class="font-bold">منظف الروابط</h3>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">إزالة أكواد التتبع الطويلة وجعل الرابط نظيفاً للمشاركة.</p>
+                <button onclick="cleanLinkMock()" class="w-full py-2 border border-orange-500 text-orange-500 rounded-lg text-sm font-bold hover:bg-orange-500 hover:text-white transition-colors">تنظيف الرابط الحالي</button>
+            </div>
+        </section>
+
+        <!-- PAGE: VAULT (GALLERY) -->
+        <section id="page-gallery" class="page-section hidden animate-fade-in pb-24">
+            <!-- Security Overlay (New Feature: Private Vault) -->
+            <div id="vault-lock" class="flex flex-col items-center justify-center py-20 text-center">
+                <div class="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4 text-3xl text-gray-400">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-2">المعرض محمي</h2>
+                <p class="text-sm text-gray-500 mb-6">أدخل رمز PIN للدخول (الافتراضي: 0000)</p>
+                <div class="flex gap-2 mb-6">
+                    <input type="password" id="pin-input" maxlength="4" class="w-32 text-center text-2xl tracking-widest bg-transparent border-b-2 border-gray-300 dark:border-gray-600 focus:border-primary outline-none py-2 font-mono">
+                </div>
+                <button onclick="unlockVault()" class="bg-primary text-white px-8 py-2 rounded-full font-bold shadow-lg">فتح الخزنة</button>
+            </div>
+
+            <!-- Gallery Content (Hidden by default) -->
+            <div id="vault-content" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">ملفاتي <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded-md ml-2" id="file-count">0</span></h2>
+                    <button onclick="lockVault()" class="text-gray-500 hover:text-primary"><i class="fas fa-lock text-lg"></i></button>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex gap-2 mb-4 overflow-x-auto pb-2 hide-scrollbar">
+                    <button class="px-4 py-1.5 rounded-full bg-primary text-white text-xs whitespace-nowrap">الكل</button>
+                    <button class="px-4 py-1.5 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs whitespace-nowrap">فيديو</button>
+                    <button class="px-4 py-1.5 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs whitespace-nowrap">صور</button>
+                    <button class="px-4 py-1.5 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs whitespace-nowrap">صوتيات</button>
+                </div>
+
+                <!-- Gallery Grid -->
+                <div id="gallery-grid" class="grid grid-cols-2 gap-3">
+                    <!-- Items injected by JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full z-50 glass dark:bg-dark/95 border-t border-gray-200 dark:border-gray-800 pb-safe">
+        <div class="flex justify-around items-center h-16">
+            <button onclick="switchTab('home')" class="nav-btn active flex flex-col items-center justify-center w-full h-full text-primary" data-target="home">
+                <i class="fas fa-home text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">الرئيسية</span>
+            </button>
+            <button onclick="switchTab('tools')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" data-target="tools">
+                <i class="fas fa-bolt text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">الأدوات</span>
+            </button>
+            
+            <!-- Center Floating Button -->
+            <div class="relative -top-5">
+                <button onclick="document.getElementById('urlInput').focus(); switchTab('home')" class="w-14 h-14 rounded-full bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center shadow-lg shadow-primary/40 transform active:scale-90 transition-transform border-4 border-gray-50 dark:border-dark">
+                    <i class="fas fa-plus text-xl"></i>
+                </button>
+            </div>
+
+            <button onclick="switchTab('gallery')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" data-target="gallery">
+                <i class="fas fa-folder-open text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">ملفاتي</span>
+            </button>
+            <button onclick="showSettings()" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <i class="fas fa-user-cog text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">إعدادات</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Download Modal Overlay -->
+    <div id="download-modal" class="fixed inset-0 z-[60] bg-black/80 hidden flex-col items-center justify-end sm:justify-center p-4">
+        <div class="bg-white dark:bg-surface w-full max-w-sm rounded-3xl p-6 relative animate-bounce-in">
+            <button onclick="closeModal()" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+            
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                    <i class="fas fa-cloud-download-alt text-2xl text-primary animate-bounce"></i>
+                </div>
+                <h3 class="text-xl font-bold dark:text-white">جاري المعالجة...</h3>
+                <p class="text-sm text-gray-500 mt-1" id="modal-status">يتم الاتصال بالسيرفر</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-2 overflow-hidden">
+                <div id="progress-bar" class="bg-gradient-to-r from-primary to-secondary h-full rounded-full w-0 transition-all duration-300"></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-500 font-mono mb-6">
+                <span id="progress-text">0%</span>
+                <span id="file-size">-- MB</span>
+            </div>
+
+            <!-- Ad/Tip Placeholder -->
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-xl p-3 flex gap-3 items-center">
+                <i class="fas fa-lightbulb text-yellow-500"></i>
+                <p class="text-xs text-yellow-700 dark:text-yellow-400">نصيحة: يمكنك تشغيل وضع "توفير البيانات" من الشاشة الرئيسية لتقليل حجم الفيديو.</p>
+            </div>
         </div>
     </div>
 
-    <!-- Start Screen -->
-    <div id="startScreen">
-        <h1>العتاولة</h1>
-        <p>اجري في شوارع مصر وتفادى التكاتك!</p>
-        <p class="controls-hint">اسحب يمين/يسار للحركة - اسحب لأعلى للقفز</p>
-        <button class="btn" onclick="startGame()">يلا بينا</button>
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-[70] transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none">
+        <i class="fas fa-check-circle text-green-400"></i>
+        <span class="text-sm font-medium" id="toast-msg">تمت العملية بنجاح</span>
     </div>
-
-    <!-- Game Over Screen -->
-    <div id="gameOverScreen" class="hidden">
-        <h1 style="color: #ff4444;">خبطت!</h1>
-        <p id="finalScore">النتيجة النهائية: 0</p>
-        <button class="btn" onclick="resetGame()">العب تاني</button>
-    </div>
-
-    <canvas id="gameCanvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        // Game State
-        let isPlaying = false;
-        let score = 0;
-        let coins = 0;
-        let speed = 0;
-        let frameCount = 0;
-        let lastTime = 0;
-
-        // Configuration
-        const INITIAL_SPEED = 15; // سرعة اللعبة
-        const MAX_SPEED = 30;
-        const LANE_WIDTH = 2; // عرض الحارة (منطقي)
-        const LANES = [-1, 0, 1]; // يسار، وسط، يمين
-        const GRAVITY = 0.003;
-        const JUMP_FORCE = 0.08;
-
-        // Image Assets (Placeholders generated via code for reliability)
-        // ملاحظة: يمكنك استبدال هذا الرابط برابط الصورة المباشر الخاص بك (Direct Link ending in .png or .jpg)
-        // بما أن الرابط الذي قدمته هو رابط مشاركة، سنستخدم شكلاً مرسوماً كبديل إذا لم تعمل الصورة.
-        const charImage = new Image();
-        charImage.src = "https://cdn-icons-png.flaticon.com/512/4825/4825038.png"; // صورة مؤقتة لفتوة (أيقونة)
-        
-        // Game Objects
-        const player = {
-            lane: 1, // 0: Left, 1: Center, 2: Right
-            x: 0, // 3D world X
-            y: 0, // 3D world Y (Height)
-            z: 0, // 3D world Z (Depth - Player stays at 0, world moves)
-            targetX: 0, // For smooth movement
-            yVelocity: 0,
-            isJumping: false,
-            width: 0.8,
-            height: 1.5,
-            color: '#e74c3c'
+        // --- State Management ---
+        const state = {
+            downloads: JSON.parse(localStorage.getItem('waslah_downloads')) || [],
+            history: JSON.parse(localStorage.getItem('waslah_history')) || [],
+            theme: localStorage.getItem('waslah_theme') || 'dark',
+            isVaultUnlocked: false
         };
 
-        let obstacles = [];
-        let particles = [];
-        let collectables = [];
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Theme Setup
+            if (state.theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
 
-        // Resize Canvas
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+            // Render Initial Data
+            renderHistory();
+            renderGallery();
 
-        // Input Handling
-        let touchStartX = 0;
-        let touchStartY = 0;
-
-        document.addEventListener('keydown', (e) => {
-            if (!isPlaying) return;
-            if (e.key === 'ArrowLeft') changeLane(-1);
-            if (e.key === 'ArrowRight') changeLane(1);
-            if (e.key === 'ArrowUp' || e.key === ' ') jump();
+            // Splash Screen Timer
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                }, 700);
+            }, 2000);
         });
 
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        }, {passive: false});
+        // --- Core Functions ---
 
-        document.addEventListener('touchmove', (e) => {
-             if(isPlaying) e.preventDefault(); // Prevent scrolling
-        }, {passive: false});
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            state.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('waslah_theme', state.theme);
+        }
 
-        document.addEventListener('touchend', (e) => {
-            if (!isPlaying) return;
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
+        function switchTab(tabId) {
+            // Hide all sections
+            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+            // Show target
+            document.getElementById(`page-${tabId}`).classList.remove('hidden');
             
-            const diffX = touchEndX - touchStartX;
-            const diffY = touchEndY - touchStartY;
+            // Update Nav
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-primary', 'active');
+                btn.classList.add('text-gray-400');
+            });
+            
+            const activeBtn = document.querySelector(`.nav-btn[data-target="${tabId}"]`);
+            if(activeBtn) {
+                activeBtn.classList.add('text-primary', 'active');
+                activeBtn.classList.remove('text-gray-400');
+            }
+        }
 
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                // Horizontal Swipe
-                if (Math.abs(diffX) > 30) {
-                    if (diffX > 0) changeLane(1);
-                    else changeLane(-1);
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-msg');
+            msgEl.textContent = msg;
+            
+            toast.style.opacity = '1';
+            toast.style.transform = 'translate(-50%, 0)';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, -20px)';
+            }, 3000);
+        }
+
+        // --- Feature 1: Downloader Logic ---
+        
+        async function pasteFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('urlInput').value = text;
+                showToast('تم لصق الرابط');
+            } catch (err) {
+                showToast('الرجاء السماح باللصق أو اللصق يدوياً', 'error');
+            }
+        }
+
+        function startDownload() {
+            const url = document.getElementById('urlInput').value;
+            if(!url) return showToast('فضلاً، ضع الرابط أولاً');
+
+            // Open Modal
+            const modal = document.getElementById('download-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Simulation Vars
+            let progress = 0;
+            const bar = document.getElementById('progress-bar');
+            const text = document.getElementById('progress-text');
+            const status = document.getElementById('modal-status');
+            const sizeDisplay = document.getElementById('file-size');
+            
+            // Add to History
+            addToHistory(url);
+
+            // Simulate Network Request
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 15);
+                if (progress > 100) progress = 100;
+                
+                bar.style.width = `${progress}%`;
+                text.textContent = `${progress}%`;
+                
+                if(progress < 30) status.textContent = "جاري تحليل الرابط...";
+                else if(progress < 60) status.textContent = "جاري المعالجة وإزالة العلامة المائية...";
+                else if(progress < 90) status.textContent = "جاري التحميل...";
+                
+                if(progress === 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        completeDownload(url);
+                        closeModal();
+                    }, 800);
                 }
+            }, 300);
+
+            // Random Size Simulation
+            sizeDisplay.textContent = (Math.random() * 20 + 2).toFixed(1) + ' MB';
+        }
+
+        function completeDownload(url) {
+            const isMp3 = document.getElementById('opt-mp3').checked;
+            const newItem = {
+                id: Date.now(),
+                url: url,
+                type: isMp3 ? 'audio' : 'video',
+                title: isMp3 ? 'مقطع صوتي مستخرج' : 'فيديو تيك توك بدون علامة',
+                date: new Date().toLocaleDateString('ar-EG'),
+                thumbnail: 'https://via.placeholder.com/300x200/1e293b/8b5cf6?text=WASLAH+FILE', // Placeholder
+                size: '5.2 MB'
+            };
+
+            state.downloads.unshift(newItem);
+            localStorage.setItem('waslah_downloads', JSON.stringify(state.downloads));
+            
+            renderGallery();
+            showToast('تم التحميل والحفظ في "ملفاتي"');
+            document.getElementById('urlInput').value = '';
+        }
+
+        function closeModal() {
+            document.getElementById('download-modal').classList.add('hidden');
+            document.getElementById('download-modal').classList.remove('flex');
+            document.getElementById('progress-bar').style.width = '0';
+        }
+
+        // --- Feature: History ---
+        function addToHistory(url) {
+            if(state.history.length > 9) state.history.pop();
+            const platform = url.includes('youtu') ? 'YouTube' : url.includes('tiktok') ? 'TikTok' : 'Link';
+            state.history.unshift({ url, platform, date: new Date().toLocaleTimeString() });
+            localStorage.setItem('waslah_history', JSON.stringify(state.history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-list');
+            container.innerHTML = state.history.map(item => `
+                <div class="flex items-center justify-between bg-white dark:bg-surface p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <div class="truncate">
+                            <p class="text-xs font-bold dark:text-white">${item.platform}</p>
+                            <p class="text-[10px] text-gray-500 truncate max-w-[150px]">${item.url}</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-gray-400">${item.date}</span>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            state.history = [];
+            localStorage.setItem('waslah_history', JSON.stringify([]));
+            renderHistory();
+            showToast('تم مسح السجل');
+        }
+
+        // --- Feature 2 & 3: Gallery & Private Vault ---
+        function unlockVault() {
+            const pin = document.getElementById('pin-input').value;
+            if(pin === '0000') {
+                document.getElementById('vault-lock').classList.add('hidden');
+                document.getElementById('vault-content').classList.remove('hidden');
+                state.isVaultUnlocked = true;
+                showToast('تم فتح الخزنة');
             } else {
-                // Vertical Swipe
-                if (diffY < -30) jump();
-            }
-        });
-
-        function changeLane(direction) {
-            const newLane = player.lane + direction;
-            if (newLane >= 0 && newLane <= 2) {
-                player.lane = newLane;
-                // Calculate target X based on lane (-1, 0, 1) scaled by lane width
-                // Lane 0 -> -LANE_WIDTH, Lane 1 -> 0, Lane 2 -> LANE_WIDTH
-                player.targetX = (player.lane - 1) * LANE_WIDTH;
+                showToast('رمز PIN خاطئ! (جرب 0000)', 'error');
+                document.getElementById('pin-input').value = '';
             }
         }
 
-        function jump() {
-            if (!player.isJumping) {
-                player.yVelocity = JUMP_FORCE;
-                player.isJumping = true;
+        function lockVault() {
+            document.getElementById('vault-lock').classList.remove('hidden');
+            document.getElementById('vault-content').classList.add('hidden');
+            document.getElementById('pin-input').value = '';
+            state.isVaultUnlocked = false;
+        }
+
+        function renderGallery() {
+            const grid = document.getElementById('gallery-grid');
+            document.getElementById('file-count').textContent = state.downloads.length;
+
+            if(state.downloads.length === 0) {
+                grid.innerHTML = `<div class="col-span-2 text-center py-10 text-gray-400 text-sm">لا توجد ملفات محفوظة</div>`;
+                return;
             }
+
+            grid.innerHTML = state.downloads.map(item => `
+                <div class="bg-white dark:bg-surface rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 group relative">
+                    <div class="h-28 bg-gray-200 dark:bg-gray-700 relative">
+                        <div class="absolute inset-0 flex items-center justify-center text-gray-400">
+                            <i class="fas fa-${item.type === 'video' ? 'play' : 'music'} fa-lg"></i>
+                        </div>
+                        <!-- Mock Thumbnail would go here -->
+                    </div>
+                    <div class="p-3">
+                        <h4 class="text-xs font-bold truncate dark:text-white mb-1">${item.title}</h4>
+                        <div class="flex justify-between items-center text-[10px] text-gray-500">
+                            <span>${item.size}</span>
+                            <span>${item.date}</span>
+                        </div>
+                    </div>
+                    <button class="absolute top-2 left-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-md" onclick="deleteItem(${item.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
         }
 
-        // --- Core Logic ---
-
-        function startGame() {
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('gameOverScreen').classList.add('hidden');
-            resetGameState();
-            isPlaying = true;
-            speed = INITIAL_SPEED;
-            animate();
+        function deleteItem(id) {
+            state.downloads = state.downloads.filter(i => i.id !== id);
+            localStorage.setItem('waslah_downloads', JSON.stringify(state.downloads));
+            renderGallery();
         }
 
-        function resetGame() {
-            startGame();
+        // --- Feature 6: Speed Test (Tools) ---
+        function runSpeedTest() {
+            const display = document.getElementById('speed-value');
+            let speed = 0.0;
+            const maxSpeed = (Math.random() * 50 + 10).toFixed(1);
+            
+            const interval = setInterval(() => {
+                speed += 1.5;
+                if(speed >= maxSpeed) {
+                    speed = maxSpeed;
+                    clearInterval(interval);
+                    showToast(`سرعتك الحالية: ${maxSpeed} MB/s`);
+                }
+                display.textContent = speed.toFixed(1);
+            }, 50);
         }
 
-        function resetGameState() {
-            player.lane = 1;
-            player.x = 0;
-            player.targetX = 0;
-            player.y = 0;
-            player.yVelocity = 0;
-            player.isJumping = false;
+        // --- Feature: Hashtag Generator ---
+        function generateHashtags() {
+            const input = document.getElementById('hashtag-input').value;
+            const resultBox = document.getElementById('hashtag-result');
             
-            obstacles = [];
-            collectables = [];
-            score = 0;
-            coins = 0;
-            frameCount = 0;
+            const baseTags = ['#اكسبلور', '#ترند', '#السعودية', '#مصر', '#فيديو', '#WaslahApp', '#وصلة'];
+            const custom = input ? input.split(' ').map(w => `#${w}`) : [];
+            const final = [...custom, ...baseTags].join(' ');
             
-            updateUI();
+            resultBox.textContent = final;
+            resultBox.classList.remove('hidden');
         }
 
-        function spawnObstacle() {
-            // Random Lane
-            const laneIndex = Math.floor(Math.random() * 3);
-            const xPos = (laneIndex - 1) * LANE_WIDTH;
-            
-            // Types: 0: Barrier, 1: TukTuk, 2: Microbus
-            const type = Math.random() < 0.5 ? 'tuktuk' : (Math.random() < 0.5 ? 'barrier' : 'microbus');
-            
-            let width = 1;
-            let height = 1;
-            let color = '#444';
-
-            if (type === 'tuktuk') {
-                width = 1.2;
-                height = 1.2;
-                color = '#000'; // Black & Yellow handled in draw
-            } else if (type === 'microbus') {
-                width = 1.4;
-                height = 1.4;
-                color = '#fff';
+        // --- Feature 4: Link Cleaner ---
+        function cleanLinkMock() {
+            const input = document.getElementById('urlInput');
+            if(input.value.includes('?')) {
+                input.value = input.value.split('?')[0];
+                showToast('تم تنظيف الرابط بنجاح');
             } else {
-                // Barrier
-                width = 1.2;
-                height = 0.8;
-                color = '#e67e22';
-            }
-
-            obstacles.push({
-                x: xPos,
-                y: 0,
-                z: 100, // Start far away
-                width: width,
-                height: height,
-                type: type,
-                passed: false
-            });
-
-            // Sometimes spawn coin in other lanes
-            const coinLane = (laneIndex + 1) % 3;
-            if (Math.random() > 0.5) {
-                spawnCoin(coinLane);
+                showToast('الرابط نظيف بالفعل');
             }
         }
 
-        function spawnCoin(laneIndex) {
-            collectables.push({
-                x: (laneIndex - 1) * LANE_WIDTH,
-                y: 0.5,
-                z: 100 + Math.random() * 10,
-                width: 0.5,
-                height: 0.5,
-                active: true
-            });
+        function showSettings() {
+            showToast('صفحة الإعدادات قادمة قريباً');
         }
-
-        function update(dt) {
-            // Increase speed slowly
-            if (speed < MAX_SPEED) speed += 0.001;
-
-            // Smooth Player Movement (Lerp)
-            // هذه هي "الحركة اللينة" المطلوبة
-            player.x += (player.targetX - player.x) * 0.15; 
-
-            // Gravity & Jump
-            if (player.isJumping || player.y > 0) {
-                player.y += player.yVelocity;
-                player.yVelocity -= GRAVITY * (dt * 60); // Time scaled gravity
-                if (player.y <= 0) {
-                    player.y = 0;
-                    player.isJumping = false;
-                    player.yVelocity = 0;
-                }
-            }
-
-            // Move Obstacles
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                let obs = obstacles[i];
-                obs.z -= speed * (dt);
-
-                // Collision Detection
-                // Simple 3D box collision logic
-                // Check Z depth overlap (player is at z=0, depth 1)
-                if (obs.z < 1 && obs.z > -1) {
-                    // Check Lane/X overlap
-                    // We use a small margin for forgiveness
-                    if (Math.abs(obs.x - player.x) < 0.8) {
-                         // Check Y (Jumping over barriers)
-                         // If obstacle is short (barrier) and player is high enough, no collision
-                         if (obs.type === 'barrier' && player.y > 0.9) {
-                             // Jumped over!
-                         } else {
-                             gameOver();
-                         }
-                    }
-                }
-
-                if (obs.z < -5) {
-                    obstacles.splice(i, 1);
-                    score += 10;
-                    updateUI();
-                }
-            }
-
-            // Move Coins
-            for (let i = collectables.length - 1; i >= 0; i--) {
-                let c = collectables[i];
-                c.z -= speed * (dt);
-
-                if (c.active && c.z < 1 && c.z > -1 && Math.abs(c.x - player.x) < 0.8 && player.y < 1.0) {
-                    c.active = false;
-                    coins++;
-                    updateUI();
-                }
-
-                if (c.z < -5) collectables.splice(i, 1);
-            }
-
-            // Spawning Logic
-            frameCount++;
-            // Spawn frequency depends on speed
-            if (frameCount > (1500 / speed)) {
-                spawnObstacle();
-                frameCount = 0;
-            }
+        
+        function showPage(page) {
+            // Placeholder for internal routing logic if expanded
+            if(page === 'notifications') showToast('لا توجد إشعارات جديدة');
         }
-
-        function gameOver() {
-            isPlaying = false;
-            document.getElementById('finalScore').innerText = "النتيجة النهائية: " + (score + (coins * 5));
-            document.getElementById('gameOverScreen').classList.remove('hidden');
-        }
-
-        function updateUI() {
-            document.getElementById('scoreDisplay').innerText = "النتيجة: " + score;
-            document.getElementById('coinsDisplay').innerText = "الجنيهات: " + coins;
-        }
-
-        // --- Rendering Engine (Pseudo-3D) ---
-
-        function project(x, y, z) {
-            // Camera setup
-            const cameraHeight = 2.5;
-            const cameraZ = -5;
-            const fov = 400; // Field of view scaling
-
-            const scale = fov / (fov + z - cameraZ);
-            const screenX = (canvas.width / 2) + (x * scale * 150); 
-            const screenY = (canvas.height / 2) - ((y - cameraHeight) * scale * 150);
-            
-            return { x: screenX, y: screenY, scale: scale };
-        }
-
-        function draw() {
-            // Clear Screen
-            ctx.fillStyle = "#87CEEB"; // Sky
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw Ground/Street (Horizon)
-            const horizonY = canvas.height / 2;
-            ctx.fillStyle = "#e0c090"; // Desert/Sandy background
-            ctx.fillRect(0, horizonY, canvas.width, canvas.height/2);
-
-            // Draw Road
-            // We draw the road as a large trapezoid going into distance
-            ctx.fillStyle = "#555"; // Asphalt
-            
-            const p1 = project(-4, 0, 100); // Far Left
-            const p2 = project(4, 0, 100);  // Far Right
-            const p3 = project(4, 0, 0);    // Near Right
-            const p4 = project(-4, 0, 0);   // Near Left
-
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.lineTo(canvas.width, canvas.height); // Expand to bottom corners
-            ctx.lineTo(0, canvas.height);
-            ctx.fill();
-
-            // Draw Lane Markers
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 2;
-            ctx.setLineDash([20, 20]);
-            
-            // Left Lane Line
-            const l1_far = project(-1, 0, 100);
-            const l1_near = project(-1, 0, 0);
-            ctx.beginPath();
-            ctx.moveTo(l1_near.x, l1_near.y);
-            ctx.lineTo(l1_far.x, l1_far.y);
-            ctx.stroke();
-
-            // Right Lane Line
-            const l2_far = project(1, 0, 100);
-            const l2_near = project(1, 0, 0);
-            ctx.beginPath();
-            ctx.moveTo(l2_near.x, l2_near.y);
-            ctx.lineTo(l2_far.x, l2_far.y);
-            ctx.stroke();
-            
-            ctx.setLineDash([]); // Reset dash
-
-            // Sort all objects by Z depth (Painter's Algorithm) so far objects draw first
-            let renderList = [];
-
-            // Add Obstacles
-            obstacles.forEach(obs => {
-                renderList.push({type: 'obstacle', obj: obs, z: obs.z});
-            });
-
-            // Add Coins
-            collectables.forEach(c => {
-                if(c.active) renderList.push({type: 'coin', obj: c, z: c.z});
-            });
-
-            // Add Player
-            renderList.push({type: 'player', obj: player, z: player.z});
-
-            // Sort: High Z (far) to Low Z (near)
-            renderList.sort((a, b) => b.z - a.z);
-
-            // Draw All
-            renderList.forEach(item => {
-                if (item.type === 'obstacle') drawObstacle(item.obj);
-                if (item.type === 'coin') drawCoin(item.obj);
-                if (item.type === 'player') drawPlayer(item.obj);
-            });
-            
-            // Draw Pyramids in background (Decor)
-            drawPyramids(horizonY);
-        }
-
-        function drawPyramids(horizonY) {
-            // Just simple triangles on horizon
-            ctx.fillStyle = "rgba(200, 160, 50, 0.5)";
-            ctx.beginPath();
-            ctx.moveTo(canvas.width * 0.8, horizonY);
-            ctx.lineTo(canvas.width * 0.9, horizonY - 100);
-            ctx.lineTo(canvas.width, horizonY);
-            ctx.fill();
-            
-            ctx.fillStyle = "rgba(180, 140, 40, 0.5)";
-            ctx.beginPath();
-            ctx.moveTo(canvas.width * 0.65, horizonY);
-            ctx.lineTo(canvas.width * 0.75, horizonY - 80);
-            ctx.lineTo(canvas.width * 0.85, horizonY);
-            ctx.fill();
-        }
-
-        function drawPlayer(p) {
-            const pos = project(p.x, p.y, p.z);
-            const size = 150 * pos.scale; // Base size
-            
-            const w = size * p.width;
-            const h = size * p.height;
-            const x = pos.x - w/2;
-            const y = pos.y - h;
-
-            // Shadow
-            ctx.fillStyle = "rgba(0,0,0,0.3)";
-            ctx.beginPath();
-            ctx.ellipse(pos.x, pos.y, w/2, w/6, 0, 0, Math.PI*2);
-            ctx.fill();
-
-            // Try to draw Image, fallback to Drawing if image fails/loads
-            if (charImage.complete && charImage.naturalHeight !== 0) {
-                ctx.drawImage(charImage, x, y, w, h);
-            } else {
-                // Fallback: Draw "El Atawla" Character manually
-                // Body
-                ctx.fillStyle = "#333"; // Black shirt
-                ctx.fillRect(x + w*0.2, y + h*0.3, w*0.6, h*0.4);
-                
-                // Legs (Pants)
-                ctx.fillStyle = "#1a1a1a";
-                ctx.fillRect(x + w*0.25, y + h*0.7, w*0.2, h*0.3);
-                ctx.fillRect(x + w*0.55, y + h*0.7, w*0.2, h*0.3);
-
-                // Head
-                ctx.fillStyle = "#d4a373"; // Skin
-                ctx.beginPath();
-                ctx.arc(x + w/2, y + h*0.2, w*0.25, 0, Math.PI*2);
-                ctx.fill();
-                
-                // Sunglasses
-                ctx.fillStyle = "#000";
-                ctx.fillRect(x + w*0.35, y + h*0.15, w*0.3, h*0.05);
-            }
-        }
-
-        function drawObstacle(obs) {
-            const pos = project(obs.x, obs.y, obs.z);
-            const size = 150 * pos.scale;
-            
-            const w = size * obs.width;
-            const h = size * obs.height;
-            const x = pos.x - w/2;
-            const y = pos.y - h;
-
-            // Shadow
-            ctx.fillStyle = "rgba(0,0,0,0.4)";
-            ctx.beginPath();
-            ctx.ellipse(pos.x, pos.y, w/2, w/5, 0, 0, Math.PI*2);
-            ctx.fill();
-
-            if (obs.type === 'tuktuk') {
-                // TukTuk Body (Black & Yellow)
-                ctx.fillStyle = "#111"; // Black frame
-                ctx.fillRect(x, y + h*0.2, w, h*0.8);
-                
-                ctx.fillStyle = "#f1c40f"; // Yellow hood
-                ctx.fillRect(x, y + h*0.4, w, h*0.4);
-
-                // Windshield
-                ctx.fillStyle = "#88ccff";
-                ctx.fillRect(x + w*0.1, y + h*0.25, w*0.8, h*0.25);
-                
-                // Wheels
-                ctx.fillStyle = "#000";
-                ctx.beginPath();
-                ctx.arc(x + w*0.2, y + h, w*0.15, 0, Math.PI*2);
-                ctx.arc(x + w*0.8, y + h, w*0.15, 0, Math.PI*2);
-                ctx.fill();
-
-            } else if (obs.type === 'microbus') {
-                // White Microbus
-                ctx.fillStyle = "#fff";
-                ctx.fillRect(x, y + h*0.2, w, h*0.7);
-                
-                // Blue stripe
-                ctx.fillStyle = "blue";
-                ctx.fillRect(x, y + h*0.5, w, h*0.1);
-
-                // Windows
-                ctx.fillStyle = "#333";
-                ctx.fillRect(x + w*0.1, y + h*0.25, w*0.8, h*0.2);
-                
-            } else {
-                // Barrier (Red/White)
-                ctx.fillStyle = "#e74c3c";
-                ctx.fillRect(x, y + h*0.5, w, h*0.5);
-                ctx.fillStyle = "#fff";
-                ctx.fillRect(x + w*0.2, y + h*0.5, w*0.2, h*0.5);
-                ctx.fillRect(x + w*0.6, y + h*0.5, w*0.2, h*0.5);
-            }
-        }
-
-        function drawCoin(c) {
-            const pos = project(c.x, c.y, c.z);
-            const size = 150 * pos.scale;
-            const w = size * c.width;
-            
-            const x = pos.x;
-            const y = pos.y - w; // Float a bit
-
-            // Make it spin (visual effect)
-            const widthScale = Math.abs(Math.sin(Date.now() / 100));
-
-            ctx.fillStyle = "#f1c40f"; // Gold
-            ctx.beginPath();
-            ctx.ellipse(x, y, (w/2) * widthScale, w/2, 0, 0, Math.PI*2);
-            ctx.fill();
-            
-            ctx.strokeStyle = "#e67e22";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            ctx.fillStyle = "#e67e22";
-            ctx.font = `bold ${w/2}px Arial`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("ج", x, y);
-        }
-
-        function animate(timestamp) {
-            if (!isPlaying) return;
-
-            const dt = (timestamp - lastTime) / 1000 || 0.016;
-            lastTime = timestamp;
-
-            update(dt);
-            draw();
-            requestAnimationFrame(animate);
-        }
-
-        // Initial Draw
-        resize();
-        draw(); // Draw static background
 
     </script>
 </body>
