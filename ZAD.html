@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تطبيق زاد | Zad App</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Tajawal', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5', 500: '#10b981', 600: '#059669', 900: '#064e3b'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Tajawal', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #059669; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #map { height: 250px; width: 100%; border-radius: 1rem; z-index: 1; }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #059669; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #059669; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 pb-20 select-none">
+
+    <!-- 1. AUTH SCREEN -->
+    <div id="auth-screen" class="fixed inset-0 z-[100] bg-white flex flex-col justify-center px-6 animate-fade-in overflow-y-auto">
+        <div class="text-center mb-6 mt-10">
+            <div class="w-20 h-20 bg-brand-600 rounded-2xl mx-auto flex items-center justify-center text-white text-4xl font-bold mb-4 shadow-lg shadow-brand-500/30">ز</div>
+            <h1 class="text-2xl font-bold text-brand-900">مرحباً بك في زاد</h1>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <!-- Tabs -->
+            <div class="flex bg-gray-100 p-1 rounded-xl mb-4">
+                <button onclick="switchAuthMode('login')" id="tab-login" class="flex-1 py-2 rounded-lg text-sm font-bold bg-white shadow-sm text-brand-600 transition-all">دخول</button>
+                <button onclick="switchAuthMode('signup')" id="tab-signup" class="flex-1 py-2 rounded-lg text-sm font-bold text-gray-500 transition-all">حساب جديد</button>
+            </div>
+
+            <!-- Inputs -->
+            <div>
+                <label class="text-xs font-bold text-gray-500 mb-1 block">البريد الإلكتروني</label>
+                <input type="email" id="auth-email" class="w-full bg-gray-50 p-3 rounded-xl border focus:border-brand-500 outline-none ltr text-left dir-ltr" placeholder="name@example.com">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 mb-1 block">كلمة المرور</label>
+                <input type="password" id="auth-pass" class="w-full bg-gray-50 p-3 rounded-xl border focus:border-brand-500 outline-none ltr text-left dir-ltr" placeholder="******">
+            </div>
+
+            <!-- Role Selection (Only visible in Signup) -->
+            <div id="role-selector" class="hidden animate-fade-in bg-orange-50 p-3 rounded-xl border border-orange-100">
+                <p class="text-xs font-bold text-orange-800 mb-2">نوع الحساب:</p>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="role" value="client" checked class="accent-brand-600 w-4 h-4">
+                        <span class="text-sm">عميل (أطلب طعام)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="role" value="restaurant" class="accent-brand-600 w-4 h-4">
+                        <span class="text-sm font-bold text-brand-700">صاحب مطعم</span>
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="handleAuthAction()" id="btn-auth-action" class="w-full bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-brand-700 transition flex justify-center items-center gap-2">
+                <span>تسجيل الدخول</span>
+            </button>
+            <p id="auth-error" class="text-red-500 text-center text-xs hidden"></p>
+        </div>
+    </div>
+
+    <!-- 2. MAIN APP -->
+    <div id="main-app" class="hidden">
+        
+        <!-- Navbar -->
+        <nav class="fixed top-0 w-full bg-white shadow-sm z-50 px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2" onclick="goHome()">
+                <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold">ز</div>
+                <div class="leading-none">
+                    <h1 class="font-bold text-lg text-brand-900">زاد</h1>
+                    <span id="user-role-badge" class="text-[10px] bg-gray-100 px-1 rounded text-gray-500">زائر</span>
+                </div>
+            </div>
+            <button onclick="signOutUser()" class="text-red-500 text-xs font-bold bg-red-50 px-3 py-1.5 rounded-lg">خروج</button>
+        </nav>
+        <div class="h-16"></div>
+
+        <!-- CLIENT VIEW: HOME -->
+        <div id="view-client-home" class="p-4 app-view hidden">
+            <!-- Location Header -->
+            <div class="bg-brand-50 p-3 rounded-xl flex justify-between items-center mb-4 cursor-pointer" onclick="goToMap()">
+                <div class="flex items-center gap-2 text-brand-800">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <p class="text-[10px] text-brand-600">التوصيل إلى</p>
+                        <p class="text-xs font-bold truncate max-w-[200px]" id="home-address">حدد موقعك...</p>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-left text-xs text-brand-400"></i>
+            </div>
+
+            <!-- Restaurants Grid -->
+            <h2 class="font-bold mb-3">المطاعم القريبة</h2>
+            <div id="restaurants-grid" class="grid gap-4 pb-20">
+                <div class="text-center py-10 text-gray-400 text-sm">جاري تحميل المطاعم...</div>
+            </div>
+        </div>
+
+        <!-- RESTAURANT OWNER VIEW: DASHBOARD -->
+        <div id="view-owner-dashboard" class="p-4 app-view hidden bg-gray-50 min-h-screen">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                <h2 class="font-bold text-lg mb-1">لوحة تحكم المطعم</h2>
+                <p class="text-xs text-gray-500 mb-4">أضف وجباتك واستقبل الطلبات</p>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-blue-50 p-3 rounded-xl text-center">
+                        <p class="text-2xl font-bold text-blue-600" id="dash-orders-count">0</p>
+                        <p class="text-xs text-blue-800">الطلبات النشطة</p>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-xl text-center">
+                        <p class="text-2xl font-bold text-green-600" id="dash-items-count">0</p>
+                        <p class="text-xs text-green-800">الوجبات</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Setup Restaurant Profile (If Empty) -->
+            <div id="owner-setup-card" class="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 mb-6 hidden">
+                <h3 class="font-bold text-orange-600 mb-2">⚠ إعداد المطعم مطلوب</h3>
+                <input type="text" id="setup-rest-name" placeholder="اسم المطعم" class="w-full bg-gray-50 border p-2 rounded-lg mb-2 text-sm">
+                <div class="mb-2">
+                    <label class="text-xs font-bold block mb-1">شعار المطعم</label>
+                    <input type="file" accept="image/*" class="w-full text-xs" onchange="compressAndPreview(this, 'setup-preview')">
+                    <img id="setup-preview" class="h-20 w-20 object-cover rounded-lg mt-2 hidden">
+                </div>
+                <button onclick="saveRestaurantProfile()" class="w-full bg-orange-500 text-white py-2 rounded-lg font-bold text-sm">حفظ البيانات</button>
+            </div>
+
+            <!-- Add New Item -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm mb-6">
+                <h3 class="font-bold mb-3 border-b pb-2">إضافة وجبة جديدة</h3>
+                <div class="space-y-2">
+                    <input type="text" id="add-item-name" placeholder="اسم الوجبة" class="w-full bg-gray-50 border p-2 rounded-lg text-sm">
+                    <input type="text" id="add-item-desc" placeholder="الوصف" class="w-full bg-gray-50 border p-2 rounded-lg text-sm">
+                    <input type="number" id="add-item-price" placeholder="السعر (ر.س)" class="w-full bg-gray-50 border p-2 rounded-lg text-sm">
+                    <div>
+                        <label class="text-xs text-gray-500">صورة الوجبة</label>
+                        <input type="file" accept="image/*" class="w-full text-xs mt-1" onchange="compressAndPreview(this, 'add-item-preview')">
+                        <img id="add-item-preview" class="h-24 w-full object-cover rounded-lg mt-2 hidden border border-dashed">
+                    </div>
+                    <button onclick="addNewMenuItem()" class="w-full bg-brand-600 text-white py-2.5 rounded-lg font-bold shadow-sm">إضافة للقائمة</button>
+                </div>
+            </div>
+
+            <!-- Menu List -->
+            <h3 class="font-bold mb-2">قائمة طعامي</h3>
+            <div id="owner-menu-list" class="space-y-3 pb-20"></div>
+        </div>
+
+        <!-- COMMON VIEW: RESTAURANT DETAILS (For Clients) -->
+        <div id="view-restaurant-details" class="app-view hidden bg-white min-h-screen">
+            <div class="relative h-48 bg-gray-200">
+                <img id="rest-detail-img" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                    <h1 id="rest-detail-name" class="text-white text-2xl font-bold"></h1>
+                </div>
+                <button onclick="goHome()" class="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+            <div class="p-4" id="rest-menu-container"></div>
+        </div>
+
+        <!-- MAP VIEW -->
+        <div id="view-map" class="app-view hidden p-4 bg-white h-screen z-[60] fixed inset-0">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-bold text-lg">تحديد موقع التوصيل</h2>
+                <button onclick="closeMap()" class="bg-gray-100 p-2 rounded-full"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="relative rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+                <div id="map"></div>
+                <!-- Crosshair center -->
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-brand-600 z-[400] pointer-events-none drop-shadow-md">
+                    <i class="fas fa-map-marker-alt text-4xl mb-4"></i>
+                </div>
+                <!-- Locate Me Button -->
+                <button onclick="locateUser()" class="absolute bottom-4 right-4 bg-white p-3 rounded-full shadow-lg z-[400] text-blue-600">
+                    <i class="fas fa-crosshairs text-xl"></i>
+                </button>
+            </div>
+            <div class="mt-4 text-center">
+                <p class="text-xs text-gray-500 mb-1">الموقع المحدد:</p>
+                <p id="map-address-display" class="font-bold text-sm mb-4">يرجى تحريك الخريطة...</p>
+                <button onclick="confirmLocation()" class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold shadow-lg">تأكيد الموقع</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- UTILS: CART & TOAST -->
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-2 rounded-full text-sm font-bold shadow-xl z-[200] opacity-0 transition-opacity pointer-events-none">
+        تمت العملية بنجاح
+    </div>
+
+    <!-- LEAFLET JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- FIREBASE MODULE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, setDoc, getDoc, getDocs, doc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyALgJ0f-UQ1t14mWFGTELAL3kyGnBRkW8I",
+            authDomain: "hoooo-ce33f.firebaseapp.com",
+            databaseURL: "https://hoooo-ce33f-default-rtdb.firebaseio.com",
+            projectId: "hoooo-ce33f",
+            storageBucket: "hoooo-ce33f.firebasestorage.app",
+            messagingSenderId: "285253833101",
+            appId: "1:285253833101:web:7dc841d61e02238d002dc4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // STATE
+        let currentUser = null;
+        let userRole = null; // 'client' or 'restaurant'
+        let currentAuthMode = 'login';
+        let mapObj = null;
+        let mapCenter = { lat: 24.7136, lng: 46.6753 };
+        let activeRestId = null;
+
+        // --- AUTH LOGIC ---
+        window.switchAuthMode = (mode) => {
+            currentAuthMode = mode;
+            document.getElementById('tab-login').className = mode === 'login' ? 'flex-1 py-2 rounded-lg text-sm font-bold bg-white shadow-sm text-brand-600 transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-gray-500 transition-all';
+            document.getElementById('tab-signup').className = mode === 'signup' ? 'flex-1 py-2 rounded-lg text-sm font-bold bg-white shadow-sm text-brand-600 transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-gray-500 transition-all';
+            document.getElementById('role-selector').classList.toggle('hidden', mode === 'login');
+            document.getElementById('btn-auth-action').innerText = mode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب';
+        };
+
+        window.handleAuthAction = async () => {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-pass').value;
+            const errorEl = document.getElementById('auth-error');
+            const btn = document.getElementById('btn-auth-action');
+
+            if (!email || !pass) {
+                errorEl.innerText = "يرجى تعبئة الحقول";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loader mx-auto border-white border-t-transparent w-5 h-5"></div>';
+
+            try {
+                if (currentAuthMode === 'signup') {
+                    // 1. Create User
+                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                    // 2. Save Role
+                    const role = document.querySelector('input[name="role"]:checked').value;
+                    await setDoc(doc(db, "users", cred.user.uid), {
+                        email: email,
+                        role: role,
+                        createdAt: serverTimestamp()
+                    });
+                } else {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                }
+            } catch (error) {
+                console.error(error);
+                errorEl.innerText = "حدث خطأ: " + error.message;
+                errorEl.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerText = currentAuthMode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب';
+            }
+        };
+
+        window.signOutUser = () => signOut(auth);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                // Fetch Role
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    userRole = userDoc.data().role || 'client';
+                } else {
+                    userRole = 'client'; // Default
+                }
+                
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                
+                // Route based on role
+                if (userRole === 'restaurant') {
+                    document.getElementById('user-role-badge').innerText = "تاجر";
+                    loadOwnerDashboard();
+                } else {
+                    document.getElementById('user-role-badge').innerText = "عميل";
+                    loadClientHome();
+                }
+            } else {
+                currentUser = null;
+                document.getElementById('main-app').classList.add('hidden');
+                document.getElementById('auth-screen').classList.remove('hidden');
+            }
+        });
+
+        // --- IMAGE COMPRESSION LOGIC (CANVAS) ---
+        window.compressAndPreview = async (input, previewId) => {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        // Create Canvas
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Resize Logic (Max 300px width/height)
+                        const MAX_SIZE = 300;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_SIZE) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
+                            }
+                        } else {
+                            if (height > MAX_SIZE) {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convert to Compressed Base64 (JPEG 0.6 Quality)
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        // Show Preview & Store
+                        const previewEl = document.getElementById(previewId);
+                        previewEl.src = dataUrl;
+                        previewEl.classList.remove('hidden');
+                        input.dataset.base64 = dataUrl; // Store in DOM element
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // --- OWNER DASHBOARD ---
+        async function loadOwnerDashboard() {
+            showView('view-owner-dashboard');
+            
+            // Check if Restaurant Profile Exists
+            const restDoc = await getDoc(doc(db, "restaurants", currentUser.uid));
+            if (restDoc.exists()) {
+                document.getElementById('owner-setup-card').classList.add('hidden');
+                activeRestId = currentUser.uid;
+                loadOwnerMenu(activeRestId);
+            } else {
+                document.getElementById('owner-setup-card').classList.remove('hidden');
+            }
+        }
+
+        window.saveRestaurantProfile = async () => {
+            const name = document.getElementById('setup-rest-name').value;
+            const imgData = document.querySelector('#owner-setup-card input[type="file"]').dataset.base64;
+
+            if (!name) return alert('يرجى كتابة اسم المطعم');
+
+            await setDoc(doc(db, "restaurants", currentUser.uid), {
+                name: name,
+                image: imgData || null,
+                ownerId: currentUser.uid,
+                createdAt: serverTimestamp()
+            });
+
+            location.reload(); // Refresh to init dashboard
+        };
+
+        window.addNewMenuItem = async () => {
+            const name = document.getElementById('add-item-name').value;
+            const price = document.getElementById('add-item-price').value;
+            const desc = document.getElementById('add-item-desc').value;
+            const imgData = document.querySelector('#add-item-preview').previousElementSibling.dataset.base64;
+
+            if (!name || !price) return alert("الاسم والسعر مطلوبان");
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerText = "...";
+
+            try {
+                await addDoc(collection(db, `restaurants/${currentUser.uid}/menu`), {
+                    name, price: Number(price), desc, image: imgData || null
+                });
+                showToast("تم إضافة الوجبة");
+                document.getElementById('add-item-name').value = '';
+                document.getElementById('add-item-price').value = '';
+                loadOwnerMenu(currentUser.uid);
+            } catch (e) {
+                alert(e.message);
+            }
+            btn.disabled = false;
+            btn.innerText = "إضافة للقائمة";
+        };
+
+        async function loadOwnerMenu(restId) {
+            const q = query(collection(db, `restaurants/${restId}/menu`));
+            const snapshot = await getDocs(q);
+            
+            document.getElementById('dash-items-count').innerText = snapshot.size;
+            
+            const container = document.getElementById('owner-menu-list');
+            container.innerHTML = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return `
+                    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100">
+                        <img src="${data.image || 'https://placehold.co/100?text=No+Img'}" class="w-16 h-16 rounded-lg object-cover bg-gray-100">
+                        <div>
+                            <p class="font-bold text-sm">${data.name}</p>
+                            <p class="text-xs text-gray-500">${data.price} ر.س</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- CLIENT LOGIC ---
+        async function loadClientHome() {
+            showView('view-client-home');
+            const grid = document.getElementById('restaurants-grid');
+            
+            try {
+                const snapshot = await getDocs(collection(db, "restaurants"));
+                if (snapshot.empty) {
+                    grid.innerHTML = '<p class="text-center col-span-2">لا توجد مطاعم مسجلة</p>';
+                    return;
+                }
+
+                grid.innerHTML = snapshot.docs.map(doc => {
+                    const r = doc.data();
+                    return `
+                        <div onclick="openClientRestaurant('${doc.id}')" class="bg-white rounded-2xl p-3 shadow-sm flex gap-3 cursor-pointer">
+                            <img src="${r.image || 'https://placehold.co/200?text=Rest'}" class="w-24 h-24 rounded-xl object-cover bg-gray-100 flex-shrink-0">
+                            <div class="flex flex-col justify-between py-1 w-full">
+                                <div>
+                                    <h3 class="font-bold text-gray-800">${r.name}</h3>
+                                    <div class="text-[10px] text-gray-400 mt-1">توصيل سريع • مأكولات متنوعة</div>
+                                </div>
+                                <div class="flex justify-between items-end">
+                                    <span class="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold">30 دقيقة</span>
+                                    <i class="fas fa-arrow-left text-brand-500 bg-brand-50 p-1.5 rounded-full text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        window.openClientRestaurant = async (restId) => {
+            showView('view-restaurant-details');
+            
+            // Get Rest Info
+            const restDoc = await getDoc(doc(db, "restaurants", restId));
+            const restData = restDoc.data();
+            document.getElementById('rest-detail-name').innerText = restData.name;
+            document.getElementById('rest-detail-img').src = restData.image || 'https://placehold.co/400';
+
+            // Get Menu
+            const q = query(collection(db, `restaurants/${restId}/menu`));
+            const snapshot = await getDocs(q);
+            document.getElementById('rest-menu-container').innerHTML = snapshot.docs.map(doc => {
+                const item = doc.data();
+                return `
+                    <div class="flex justify-between items-center border-b border-gray-100 py-4">
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-900">${item.name}</p>
+                            <p class="text-xs text-gray-500 line-clamp-2 my-1">${item.desc || ''}</p>
+                            <p class="text-brand-600 font-bold text-sm">${item.price} ر.س</p>
+                        </div>
+                        <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-50 ml-3">
+                            <img src="${item.image || 'https://placehold.co/150'}" class="w-full h-full object-cover">
+                        </div>
+                        <button class="bg-brand-50 w-8 h-8 rounded-full text-brand-600 flex items-center justify-center font-bold shadow-sm hover:bg-brand-600 hover:text-white transition">+</button>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        // --- MAPS & GPS ---
+        window.goToMap = () => {
+            document.getElementById('view-map').classList.remove('hidden');
+            initMap();
+        };
+
+        window.closeMap = () => document.getElementById('view-map').classList.add('hidden');
+
+        function initMap() {
+            if (!mapObj) {
+                mapObj = L.map('map').setView([mapCenter.lat, mapCenter.lng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(mapObj);
+                
+                // Map Move Listener
+                mapObj.on('moveend', function() {
+                    const center = mapObj.getCenter();
+                    mapCenter = { lat: center.lat, lng: center.lng };
+                    document.getElementById('map-address-display').innerText = `${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}`;
+                });
+            }
+            setTimeout(() => mapObj.invalidateSize(), 100); // Fix rendering glitch
+        }
+
+        window.locateUser = () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    mapObj.setView([lat, lng], 16);
+                    mapCenter = { lat, lng };
+                }, err => alert("فشل تحديد الموقع: " + err.message));
+            } else {
+                alert("GPS غير مدعوم");
+            }
+        };
+
+        window.confirmLocation = () => {
+            document.getElementById('home-address').innerText = `${mapCenter.lat.toFixed(4)}, ${mapCenter.lng.toFixed(4)}`;
+            closeMap();
+        };
+
+        // --- HELPER ---
+        window.showView = (id) => {
+            document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        };
+
+        window.showToast = (msg) => {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 2000);
+        };
+        
+        window.goHome = () => {
+           if(userRole === 'restaurant') loadOwnerDashboard();
+           else loadClientHome();
+        }
+
+    </script>
+</body>
+</html>
+
+
